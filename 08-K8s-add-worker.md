@@ -58,9 +58,9 @@ Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 ```
 
 ## Add node role
-I like to have a `ROLES` with `worker`, so I added a node role:
+I like to have `ROLES` with `worker` for all my worker nodes. Just add an empty label `node-role.kubernetes.io/worker` on your worker nodes:
 ```sh
-kubectl label node k8sworker1.isociel.com node-role.kubernetes.io/worker=myworker
+kubectl label node k8sworker1.isociel.com node-role.kubernetes.io/worker=''
 ```
 
 ## Check New Worker Node
