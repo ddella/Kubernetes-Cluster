@@ -1,0 +1,21 @@
+cat <<EOF > 3-service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  namespace: test
+  labels:
+    run: myapp-svc
+    replica: blue
+    color: blue
+spec:
+  selector:
+    app: myapp
+    replica: blue
+  type: LoadBalancer
+  ports:
+  - port: 8181
+    protocol: TCP
+    targetPort: http
+EOF

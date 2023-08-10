@@ -149,8 +149,9 @@ sudo apt install nginx
 ```
 
 ## Checking Nginx
-Check that Nginx is running
+Start and check that Nginx is running:
 ```sh
+sudo systemctl start nginx
 sudo systemctl status nginx
 ```
 

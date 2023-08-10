@@ -84,7 +84,7 @@ EOF
 
 Create the script that checks if Nginx is running:
 ```sh
-cat <<EOF | sudo tee /etc/keepalived/check_nginx.sh > /dev/null
+cat <<'EOF' | sudo tee /etc/keepalived/check_nginx.sh > /dev/null
 #!/bin/sh
 if [ -z "$(pidof nginx)" ]; then
   exit 1
@@ -155,7 +155,7 @@ EOF
 
 Create the script that checks if Nginx is running:
 ```sh
-cat <<EOF | sudo tee /etc/keepalived/check_nginx.sh > /dev/null
+cat <<'EOF' | sudo tee /etc/keepalived/check_nginx.sh > /dev/null
 #!/bin/sh
 if [ -z "$(pidof nginx)" ]; then
   exit 1
