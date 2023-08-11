@@ -9,7 +9,7 @@ I assume you know how to configure an Nginx as either a layer 4 or layer 7 load 
 `keepalived` is used for IP failover between two servers. Its facilities for load balancing and high-availability to Linux-based infrastructures. It worked with VRRP (Virtual Router Redundancy Protocol) protocol. In this tutorial, we will configured IP failover between two Linux systems running Nginx as a load balancer for a web server.
 
 ## High Level Diagram
-For this scenario, we have two Ubuntu server that will run `keepalived` and share a VIP.
+For this scenario, we have two Ubuntu servers that will run `keepalived` and share a VIP.
 
 - `k8sapi1` Load Balancer: 192.168.13.71
 - `k8sapi2` Load Balancer: 192.168.13.72
@@ -27,7 +27,7 @@ This is a short guide on how to install `keepalived` package on Ubuntu 22.04:
 sudo apt update && sudo apt install keepalived
 ```
 
-**DON'T DO THIS** but I couldn't help myself and I did it 😉 I downloaded the latest `.deb` package, extracted the binary file and copied it to `/usr/sbin/`. This should **NEVER BE DONE IN PRODUCTION** but the only dependencie not met is `libsnmp40` so I decided to try the newest release 😀
+**DON'T DO THIS** but I couldn't help myself and I did it 😉 I downloaded the latest `.deb` package, extracted the binary file and copied it to `/usr/sbin/`. This should **NEVER BE DONE IN PRODUCTION** but the only dependencie not met is `libsnmp40`, so I decided to try it 😀
 ```sh
 curl -LO http://security.ubuntu.com/ubuntu/pool/main/k/keepalived/keepalived_2.2.8-1_amd64.deb
 # sudo apt-get install ./keepalived_2.2.8-1_amd64.deb
