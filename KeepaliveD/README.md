@@ -136,7 +136,7 @@ vrrp_instance VRRP_1 {
   state BACKUP
   interface ens33
   virtual_router_id 70
-  priority 255
+  priority 250
   advert_int 1
   authentication {
     auth_type PASS
