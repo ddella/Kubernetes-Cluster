@@ -35,7 +35,7 @@ kubeadm join k8sapi.isociel.com:6443 --token dmpzpb.iyznr5p85yr9j4oi --discovery
 Below is the command to generate a certificate key. This value is only good for two hours:
 Generate 
 ```sh
-export CERT_KEY=$( { sudo kubeadm --kubeconfig /home/daniel/.kube/config init phase upload-certs --upload-certs 2>/dev/null || echo 0; } | tail -n 1 )
+export CERT_KEY=$( { sudo kubeadm --kubeconfig $HOME/.kube/config init phase upload-certs --upload-certs 2>/dev/null || echo 0; } | tail -n 1 )
 echo ${CERT_KEY}
 ```
 
