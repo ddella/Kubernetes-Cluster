@@ -13,6 +13,10 @@ The goal is to transform Nginx to act as a layer 7 reverse proxy, meaning it wil
 > [!WARNING]  
 > DO NOT try this on a production K8s cluster. There's chances that you can break your cluster.
 
+##
+
+![](images/nginx-l7-lb.jpg)
+
 ## Configure Nginx for layer 7 Load Balancing
 Your Nginx should be configured to act as a TCP layer 4 load balancer for K8s API. The following steps will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The file configuration create will end with `.bak` and won't be read by Nginx.
 
