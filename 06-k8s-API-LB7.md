@@ -1,13 +1,17 @@
 <a name="readme-top"></a>
 
 # Nginx as a layer 7 Load Balancer
-If you followed the order of this multipart tutorail you should have a fully functionnal multi master node Kubernetes cluster with alayer 4 load balancer. Now let's convert our it to a layer 7 load balancer.
+If you followed the order of this multipart tutorial, you should have a fully functionnal multi master node Kubernetes cluster with a layer 4 load balancer. Now let's convert it to a layer 7 load balancer.
+
+> [!WARNING]  
+> I think I read that this configuration is not supported by Kubernetes.
 
 ## Configure Nginx for layer 7 Load Balancing
-We will configure Nginx to act as a TCP (layer 4) load balancer for K8s API. Later we will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The file configuration create will end with `.bak` and won't be read by Nginx.
+Your Nginx should be configured to act as a TCP layer 4 load balancer for K8s API. The following steps will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The file configuration create will end with `.bak` and won't be read by Nginx.
 
-Create the file `k8sapi.conf.bak` and adjust (trust me on this one):
-- the certificate and private key
+Create the file `k8sapi.conf.bak` and adjust for your needs:
+- the **server** certificate and private key: `k8sapiserver`
+- the **client** certificate and private key: `k8sapiclient`
 - the group of servers
 - the `proxy_pass` which is the URL of the group of K8s API servers
 
@@ -68,14 +72,16 @@ server {
 EOF
 ```
 
-**Important**: Verify Nginx configuration files with the command:
+**Important**: Verify the Nginx configuration file with the command:
 ```sh
 sudo nginx -t
 ```
->**Note**: If you don't use `sudo`, you'll get some weird alerts
+
+> [!NOTE]  
+> If you don't use `sudo`, you'll get some weird alerts
 
 # Create client certificate
-Create a client certificate for mTLS. This is the certificate Nginx will present to any master node for API requests. This certificate needs to be signed by our Kubernetes cluster `CA`. You can find the K8s Cluster CA files in `/etc/kubernetes/pki/ca.*`. Just copy the `ca.crt and ca.key` files in a temporary directory. They will be needes to create the client certificate. I know, this is against all best practice 😇
+Create a client certificate for mTLS. This is the certificate Nginx will present to any master node for API requests. This certificate **MUST** to be signed by your Kubernetes cluster `CA`. You can find the K8s Cluster CA files in `/etc/kubernetes/pki/ca.*`. Just copy the `ca.crt` and `ca.key` files in a temporary directory. They will be needed to create the client certificate. I know, this is against all best practice 😇
 
 As a reminder:
 |Role|FQDN|IP|
@@ -125,7 +131,7 @@ unset EXTRA_SAN
 unset CERT_NAME
 ```
 
-## Copy the cert and key
+## Copy the certificate and private key
 I generated the certificate and private key on the `k8smaster1` node. I needed to copy the certificate and private key to the load balancer `k8sapi`. **You might not need to do this!**
 ```sh
 scp k8sapiclient.{crt,key} daniel@k8sapi:/home/daniel/certs/.
@@ -159,7 +165,8 @@ sudo cp ca.crt /usr/local/share/ca-certificates/.
 sudo update-ca-certificates
 ```
 
->**Note**: It is important to have the `.crt` extension for the file, otherwise it will not be processed.
+> [!IMPORTANT]  
+> It is important to have the `.crt` extension for the file, otherwise it will not be processed.
 
 If you try the same command, you won't get the error message anymore. You could have used `curl --insecure ...` but I prefer to trust the CA certificate.
 ```sh
@@ -167,9 +174,12 @@ curl https://k8sapi.isociel.com:6443/api/v1/nodes?limit=500
 ```
 
 # Create server certificate
-Create a server certificate for Nginx. This is the certificate Nginx will present to any client doing API requests. This certificate can be signed by any root `CA`. I decided to create my own private `CA` with an intermediate `CA` and signed the server certificate with it.
+Create a server certificate for Nginx. This is the certificate Nginx will present to any client doing an API requests (kubectl get ...). This certificate can be signed by any root `CA`. I decided to create my own private `CA` with an intermediate `CA` and signed the server certificate with it.
 
-I used the script `06-gen_cert.sh` to create the server certificate. I already had my own private with the file `ca-crt.pem` and `int-crt.pem`. You can find those files in the `Private-CA` directory. They are needed by the script `06-gen_cert.sh`.
+> [!NOTE]  
+> The client will need to trust the `CA`, if it's a private one like I did.
+
+I used the script `06-gen_cert.sh` to create the server certificate. I already had my own private `CA` with the file `ca-crt.pem` and `int-crt.pem`. You can find those files in the `Private-CA` directory. They are needed by the script `06-gen_cert.sh`.
 
 # Trust your own CA
 I have a different certificate for the server portion of the Nginx load balancer. The `server` section is to one who answers the requests from the client, `kubectl`. I build my own CA and intermediate CA and generated a certificate with ECC key. I wanted to have a different certificathe than the one for the `location` section. Make sure, if you do that, to add the CA and intermediate CA in the local CA trust store. If you don't trust you root/int CA certificates, you'll get the following message if you try to make an API call outside Kuverbetes.
@@ -266,7 +276,9 @@ sudo mv /etc/nginx/tcpconf.d/k8sapi.conf /etc/nginx/tcpconf.d/k8sapi.conf.bak
 sudo systemctl restart nginx
 sudo systemctl status nginx
 ```
->Note: I prefer to have Nginx configured as a layer 7 load balancer because the logs are way more verbose since Nginx terminates the TLS session.
+
+> [!NOTE]  
+> I prefer to have Nginx configured as a layer 7 load balancer because the logs are way more verbose since it terminates the TLS session.
 
 # Convert to Layer 4 Load Balancer
 If you want to go back to Layer 4 Load Balancer, just apply those changes to have Nginx act as a layer 4 load balancer. Apply this on `k8sapi` server:
