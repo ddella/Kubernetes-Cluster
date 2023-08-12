@@ -1,10 +1,17 @@
 <a name="readme-top"></a>
 
 # Nginx as a layer 7 Load Balancer
-If you followed the order of this multipart tutorial, you should have a fully functionnal multi master node Kubernetes cluster with a layer 4 load balancer. Now let's convert it to a layer 7 load balancer.
+This tutorial assumes:
+- you already have a Kubernetes Cluster with multi control plane
+- you have Nginx configured as a layer 4 load balancer
+
+The goal is to transform Nginx to act as a layer 7 reverse proxy, meaning it will terminate the TLS sessions. It will then create new TLS sessions with the Kubernetes API servers.
+
+> [!IMPORTANT]  
+> This configuration is not supported by Kubernetes. All your users will have the same identity from Kubernetes point of view. Nginx will always present the same certificate.
 
 > [!WARNING]  
-> I think I read that this configuration is not supported by Kubernetes.
+> DO NOT try this on a production K8s cluster. There's chances that you can break your cluster.
 
 ## Configure Nginx for layer 7 Load Balancing
 Your Nginx should be configured to act as a TCP layer 4 load balancer for K8s API. The following steps will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The file configuration create will end with `.bak` and won't be read by Nginx.
