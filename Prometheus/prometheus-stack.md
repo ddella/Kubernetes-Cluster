@@ -32,6 +32,10 @@ helm show values prometheus-community/kube-prometheus-stack > values.yaml
 ```
 
 I prefer running Prometheus in it's own namespace:
+```sh
+sed -i 's/namespaceOverride: ""/namespaceOverride: "prometheus"/g' values.yaml
+```
+
 ```
 ## Override the deployment namespace
 ##
@@ -120,9 +124,39 @@ statefulset.apps/alertmanager-prometheus-kube-prometheus-alertmanager   1/1     
 statefulset.apps/prometheus-prometheus-kube-prometheus-prometheus       1/1     37s
 ```
 
+# Connect to Prometheus
+```sh
+kubectl get svc -n prometheus
+```
+
+Output:
+```
+NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+alertmanager-operated                     ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   28h
+prometheus-grafana                        ClusterIP   198.19.176.7     <none>        80/TCP                       28h
+prometheus-kube-prometheus-alertmanager   ClusterIP   198.19.209.242   <none>        9093/TCP,8080/TCP            28h
+prometheus-kube-prometheus-operator       ClusterIP   198.19.171.201   <none>        443/TCP                      28h
+prometheus-kube-prometheus-prometheus     ClusterIP   198.19.188.7     <none>        9090/TCP,8080/TCP            28h
+prometheus-kube-state-metrics             ClusterIP   198.19.181.191   <none>        8080/TCP                     28h
+prometheus-operated                       ClusterIP   None             <none>        9090/TCP                     28h
+prometheus-prometheus-node-exporter       ClusterIP   198.19.7.36      <none>        9100/TCP                     28h
+```
+The Prometheus server is `prometheus-kube-prometheus-prometheus     ClusterIP   198.19.188.7     <none>        9090/TCP,8080/TCP            28h`
+
+COnfigure port-forwarding:
+```sh
+kubectl port-forward -n prometheus prometheus-prometheus-kube-prometheus-prometheus-0 9090
+```
+
+Start a browser on the same machine and type the URL `http://127.0.0.1:9090`
+
+# Prometheus Configuration
+
+
+
 ---
 # Uninstall Helm Chart (just in case 😀)
-If you ever want to uninstall Prometheus completely, use the commands below (deleting the namespace should be sufficient):
+If you ever want to uninstall Prometheus completely, use the commands below:
 ```sh
 helm uninstall prometheus
 kubectl delete ns prometheus
@@ -144,6 +178,11 @@ kubectl delete crd thanosrulers.monitoring.coreos.com
 You shouldn't see anything in the namespace `prometheus`
 ```sh
 kubectl get all -n prometheus
+```
+
+Delete the namespace:
+```sh
+kubectl delete ns prometheus
 ```
 
 ## If you want to remove the images, go on each node (master and worker) and:
