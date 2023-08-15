@@ -27,15 +27,10 @@ Create the namespace:
 kubectl create -f prometheus-ns.yaml
 ```
 
-Check that it as indeed been created with the command:
-```sh
-kubectl get ns
-```
-
 # Create NFS directory
 We need at least two Peristent Volume for Prometheus. I'll be using an NFS server on the master node. The directories need to exist on the NSF drive before we configure the PV and PVC.
 
-Create the directories on the NFS server and change the owner:
+Create the directories **on the NFS server** and change the owner:
 ```sh
 mkdir /nfs-data/prom-srv-pv
 mkdir /nfs-data/prom-ale-pv
@@ -176,7 +171,7 @@ kubectl get pv,pvc -n prometheus
     persistentvolumeclaim/storage-prometheus-alertmanager-0   Bound    prometheus-ale-pv   1Gi        RWX            prometheus-ale-pv   108s
 
 # Install Prometheus
-I'll use `helm` to install Prometheus.
+I'll use `helm` to install Prometheus. If you don't have Helm installed, follow this quick tutorial [here](../helm.md)
 
 Get Repository Info:
 ```sh
@@ -392,3 +387,6 @@ quay.io/prometheus/prometheus                            v2.44.0             759
 ```sh
 crictl rmi <IMAGE ID>
 ```
+# References
+[Kubernetes Monitoring Made Easy with Prometheus | KodeKloud](https://www.youtube.com/watch?v=6xmWr7p5TE0)  
+[](https://github.com/prometheus-community/helm-charts)  

@@ -9,7 +9,15 @@ kubectl explain pods
 
 # Can be used to get the logs of a deployment or pods with appropriate parameters to log the same
 kubectl logs deployment/webapp --since 5m > /tmp/logs.txt
+
+# To see which Kubernetes resources are and aren't in a namespace:
+# In a namespace
+kubectl api-resources --namespaced=true
+
+# Not in a namespace
+kubectl api-resources --namespaced=false
 ```
+
 
 # Cilium Cheat Sheet
 ```sh

@@ -33,3 +33,6 @@ rm -rf linux-amd64/
 rm -f helm-v${VER}-linux-amd64.tar.gz
 unset VER
 ```
+
+# References
+[Install From Binary Releases](https://helm.sh/docs/intro/install/)  

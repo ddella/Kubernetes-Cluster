@@ -13,18 +13,26 @@ The goal is to transform Nginx to act as a layer 7 reverse proxy, meaning it wil
 > [!WARNING]  
 > DO NOT try this on a production K8s cluster. There's chances that you can break your cluster.
 
-##
+## TLS Certificates
+Since Nginx will terminate the TLS session from the client, it will need a server certificate to present to each client's request. This is the file `k8sapiserver.{crt,key}`
+
+Nginx will then initiate a TLS connection to the K8s API server and will need to present a valid client certificate. This is the file `k8sapiclient.{crt,key}`.
+
+The server certificate on K8s API as already been created when you bootstrapped your server.
 
 ![](images/nginx-l7-lb.jpg)
 
 ## Configure Nginx for layer 7 Load Balancing
-Your Nginx should be configured to act as a TCP layer 4 load balancer for K8s API. The following steps will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The file configuration create will end with `.bak` and won't be read by Nginx.
+In this tutorial I assumed you already have your Nginx configured to act as a TCP layer 4 load balancer for K8s API. The following steps will transform it in a HTTPS (layer 7) load balancer. Let's prepare the layer 7 load balancing configuration. The configuration file created will end with `.bak` and won't be read by Nginx until the extension ends with `.conf`.
 
 Create the file `k8sapi.conf.bak` and adjust for your needs:
-- the **server** certificate and private key: `k8sapiserver`
-- the **client** certificate and private key: `k8sapiclient`
-- the group of servers
-- the `proxy_pass` which is the URL of the group of K8s API servers
+- the **server** certificate and private key: `k8sapiserver.{crt,key}`
+- the **client** certificate and private key: `k8sapiclient.{crt,key}`
+- `k8smaster.isociel.com:6443` are your K8s API endpoints
+- `k8sapi.isociel.com` is the `controlPlaneEndpoint` entry configured when you bootstrapped your cluster
+
+> [!WARNING]  
+> If you forgot to configure an `controlPlaneEndpoint`, stop right now as it won't work and you **WILL** break your cluster.
 
 ```sh
 sudo cat <<'EOF' | sudo tee /etc/nginx/conf.d/k8sapi.conf.bak >/dev/null
@@ -83,16 +91,16 @@ server {
 EOF
 ```
 
-**Important**: Verify the Nginx configuration file with the command:
+**Important**: Verify the Nginx configuration file(s) with the command:
 ```sh
 sudo nginx -t
 ```
 
 > [!NOTE]  
-> If you don't use `sudo`, you'll get some weird alerts
+> If you don't use `sudo`, you'll get some weird alerts.
 
 # Create client certificate
-Create a client certificate for mTLS. This is the certificate Nginx will present to any master node for API requests. This certificate **MUST** to be signed by your Kubernetes cluster `CA`. You can find the K8s Cluster CA files in `/etc/kubernetes/pki/ca.*`. Just copy the `ca.crt` and `ca.key` files in a temporary directory. They will be needed to create the client certificate. I know, this is against all best practice 😇
+Create a client certificate for mTLS. This is the certificate Nginx will present to any master node for API requests. This certificate **MUST** to be signed by your Kubernetes cluster `CA`. You can find the K8s Cluster CA files in any control plane node in `/etc/kubernetes/pki/ca.*`. They are identical on all the master nodes. Just copy the `ca.crt` and `ca.key` files in a temporary directory. They will be needed to sign the client certificate. I know, this is against all best practice 😇
 
 As a reminder:
 |Role|FQDN|IP|
@@ -104,8 +112,9 @@ As a reminder:
 
 Create the client certificate:
 ```sh
-# If you don't want any SAN, just leave the string empty like this: ''
+# Enter hostname, FQDN and IP addresses of ALL your Nginx reverse proxy
 export EXTRA_SAN=',DNS:k8sapi.isociel.com, DNS:k8sapi, IP:192.168.13.60'
+# This is just the filenames for key, csr and cer
 export CERT_NAME='k8sapiclient'
 
 printf "\nMaking Client Private Key ...\n"
@@ -143,7 +152,7 @@ unset CERT_NAME
 ```
 
 ## Copy the certificate and private key
-I generated the certificate and private key on the `k8smaster1` node. I needed to copy the certificate and private key to the load balancer `k8sapi`. **You might not need to do this!**
+I generated the certificate and private key on the `k8smaster1` node. I needed to copy the certificate and private key to the load balancer `k8sapi`. **You might not need to do this** depending of where you generated the client certificate.
 ```sh
 scp k8sapiclient.{crt,key} daniel@k8sapi:/home/daniel/certs/.
 ```
@@ -190,7 +199,65 @@ Create a server certificate for Nginx. This is the certificate Nginx will presen
 > [!NOTE]  
 > The client will need to trust the `CA`, if it's a private one like I did.
 
-I used the script `06-gen_cert.sh` to create the server certificate. I already had my own private `CA` with the file `ca-crt.pem` and `int-crt.pem`. You can find those files in the `Private-CA` directory. They are needed by the script `06-gen_cert.sh`.
+I used the script below to create the server certificate. I already had my own private `CA` and `Intermediate CA` with the file `ca-crt.pem` and `int-crt.pem`. You can find those files in the `Private-CA` directory. They are needed by the script.
+
+```sh
+cat <<'EOF' > gen_cert.sh
+#!/bin/sh
+# Generate a new certificate for a server and signs it with a supplied CA (root or intermediate).
+
+# Hostname of the server
+export HOSTNAME='k8sapi'
+# Domain name of the server
+export DOMAIN='isociel.com'
+# This is just the filenames for {.key, .csr, .cer}
+export CERT_NAME='k8sapiserver'
+# The reverse proxy endpoint. If using VRRP, only the VRRP endpoint is needed, no need
+# to list all the reverse proxy.
+export EXTRA_SAN=",DNS:${HOSTNAME},DNS:${HOSTNAME}.${DOMAIN},IP:192.168.13.60"
+# CA or Intermediate CA
+export MY_CA='int'
+
+printf "\nMaking certificate for: ${HOSTNAME}.${DOMAIN} ...\n"
+openssl ecparam -name prime256v1 -genkey -out ${CERT_NAME}.key
+
+openssl req -new -sha256 -key ${CERT_NAME}.key -subj "/C=CA/ST=QC/L=Montreal/OU=IT/CN=${HOSTNAME}.${DOMAIN}" \
+-addext "subjectAltName = DNS:localhost,IP:127.0.0.1${EXTRA_SAN}" \
+-addext "basicConstraints = CA:FALSE" \
+-addext "extendedKeyUsage = clientAuth,serverAuth" \
+-addext "subjectKeyIdentifier = hash" \
+-addext "keyUsage = nonRepudiation, digitalSignature, keyEncipherment, keyAgreement, dataEncipherment" \
+-addext "authorityInfoAccess = caIssuers;URI:http://localhost:8000/Intermediate-CA.cer,OCSP;URI:http://localhost:8000/ocsp" \
+-addext "crlDistributionPoints = URI:http://localhost:8000/crl/Root-CA.crl,URI:http://localhost:8080/crl/Intermediate-CA.crl" \
+-out ${CERT_NAME}.csr
+
+openssl x509 -req -sha256 -days 365 -in ${CERT_NAME}.csr -CA ${MY_CA}-crt.pem -CAkey ${MY_CA}-key.pem -CAcreateserial \
+-extfile - <<<"subjectAltName = DNS:localhost,IP:127.0.0.1${EXTRA_SAN}
+basicConstraints = CA:FALSE
+extendedKeyUsage = clientAuth,serverAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid, issuer
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, keyAgreement, dataEncipherment
+authorityInfoAccess = caIssuers;URI:http://localhost:8000/Intermediate-CA.cer,OCSP;URI:http://localhost:8000/ocsp
+crlDistributionPoints = URI:http://localhost:8000/crl/Root-CA.crl,URI:http://localhost:8000/crl/Intermediate-CA.crl" \
+-out ${CERT_NAME}.crt
+
+printf "\nPrinting Certificate...\n"
+# openssl req -noout -text -in $1-csr.pem
+openssl x509 -text -noout -in ${CERT_NAME}.crt
+
+printf "\nPrinting Digest of crt, key and csr. All values must be the same...\n"
+openssl pkey -in ${CERT_NAME}.key  -pubout | openssl dgst -sha256 -r | cut -d' ' -f1
+openssl x509 -in ${CERT_NAME}.crt -pubkey -noout | openssl dgst -sha256 -r | cut -d' ' -f1
+openssl req -in ${CERT_NAME}.csr -pubkey -noout | openssl dgst -sha256 -r | cut -d' ' -f1
+EOF
+```
+
+Make the script executable and execute it:
+```sh
+chmod +x gen_cert.sh
+./gen_cert.sh
+```
 
 # Trust your own CA
 I have a different certificate for the server portion of the Nginx load balancer. The `server` section is to one who answers the requests from the client, `kubectl`. I build my own CA and intermediate CA and generated a certificate with ECC key. I wanted to have a different certificathe than the one for the `location` section. Make sure, if you do that, to add the CA and intermediate CA in the local CA trust store. If you don't trust you root/int CA certificates, you'll get the following message if you try to make an API call outside Kuverbetes.
@@ -234,9 +301,9 @@ The `~/.kube/config` file contains the following TLS certificates and key:
 - client certificate in the field `client-certificate-data:`
 - client private key in the field `client-key-data:`
 
-For every certificates you're using, you need to have the root CA, including any intermediate certificate, in your config file. The string for the certificate in the `base64`. The field `certificate-authority-data:` can contain multiple certificates.
+For every certificates you're using, you need to have the root CA, including any intermediate certificate, in your config file. The string for the certificates and private key is `base64` encoded. The field `certificate-authority-data:` can contain multiple certificates.
 
-At this point Nginx is still in layer 4 load balancer. Let's replace the filed `certificate-authority-data:` with your `ca-chain.crt` file in preparation of using Nginx in layer 7 with our own certificate.
+At this point Nginx is still a layer 4 load balancer. Let's replace the filed `certificate-authority-data:` with your `ca-chain.crt` file in preparation of using Nginx in layer 7 with our own certificate.
 
 Here's the magic command that will replace the old CA certificate with the new one and preserve leading whitespace, since this is basically a `yaml` file. Keep a backup copy of the original `kubeconfig` file as `config.l4` since we bootstrapped our Kubernetess cluser with Nginx configured as a layer 4 load balancer:
 ```sh
