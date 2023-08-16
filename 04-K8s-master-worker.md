@@ -19,34 +19,32 @@ To follow this guide, you need:
 - Install [nerdctl](https://github.com/containerd/nerdctl)
 
 # Install `kubectl`, `kubelet` and `kubeadm`
+> **Note**
+>Kubernetes has two different package repositories starting from August 2023. The Google-hosted repository is deprecated and it's being replaced with the Kubernetes (community-owned) package repositories. The Kubernetes project strongly recommends using the Kubernetes community-owned package repositories, because the project plans to stop publishing packages to the Google-hosted repository in the future.
+
+>There are some important considerations for the Kubernetes package repositories:
+>- The Kubernetes package repositories contain packages beginning with those Kubernetes versions that were still under support when the community took over the package builds. This means that anything before v1.24.0 will only be available in the Google-hosted repository.
+>- There's a dedicated package repository for each Kubernetes minor version. When upgrading to to a different minor release, you must bear in mind that the package repository details also change.
+
 Install packages dependency:
 ```sh
 sudo apt install apt-transport-https ca-certificates
 ```
 
-Download Google Cloud Public (GCP) signing key using curl command:
+Download the public signing key for the Kubernetes package repositories. The same signing key is used for all repositories so you can disregard the version in the URL:
 ```sh
-curl -sS https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k8s-archive-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 ```
 
 Add the Kubernetes repository:
 ```sh
-echo "deb [signed-by=/usr/share/keyrings/k8s-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 ```
 
-Update the software package index. You shouldn't have any warnings about Kubernetes public key:
+Update the apt package index, install kubelet, kubeadm and kubectl, and pin their version:
 ```sh
 sudo apt update
-```
-
-Install Kubernetes with the following command:
-```sh
 sudo apt install -y kubelet kubeadm kubectl
-```
-
-Optional:
-The following command hold back packages to prevent any updates with `apt`:
-```sh
 sudo apt-mark hold kubelet kubeadm kubectl
 ```
 

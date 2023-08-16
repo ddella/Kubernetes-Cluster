@@ -33,3 +33,9 @@ sudo nala update
 ```sh
 nala list --upgradable
 ```
+
+# Cleanup
+Delete packages:
+```sh
+rm -f volian-archive*.deb
+```
