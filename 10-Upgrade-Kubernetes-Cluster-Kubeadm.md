@@ -69,13 +69,14 @@ sudo apt-mark hold kubeadm
 ```
 
 # Step 4: Upgrading first control plane node
+> [!IMPORTANT]  
+> You do either **Step 4:** or **Step 5:** but not both. 
+> he **Step 4:** is for the first control plane and **Step 5:** is for all other control plane.
+
 The upgrade procedure on control plane nodes should be executed one node at a time. Pick a control plane node that you wish to upgrade first. It must have the `/etc/kubernetes/admin.conf` file.
 ```sh
 sudo kubeadm upgrade apply v1.28.0
 ```
-
-> [!IMPORTANT]  
-> You do either **Step 4:** or **Step 5:** but not both
 
 # Step 5: Upgrading other control plane node(s)
 You do this step only if you have already upgraded one control plane node.
@@ -198,6 +199,19 @@ kubectl get nodes
 
 Congradulation 🎉🎉🎉
 
+---
+
+# Upgrade jump station
+If you manage your cluster from a `jump station`, don't forget to update `kubectl`
+
+```sh
+sudo apt-mark unhold kubectl
+sudo apt update && sudo apt install -y kubectl=1.28.0-00
+sudo apt-mark hold kubectl
+```
+
+---
+
 # How it works
 
 `kubeadm upgrade apply` does the following:
@@ -224,4 +238,3 @@ Congradulation 🎉🎉🎉
 
     Fetches the kubeadm ClusterConfiguration from the cluster.
     Upgrades the kubelet configuration for this node.
-
