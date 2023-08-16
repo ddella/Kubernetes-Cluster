@@ -210,6 +210,13 @@ sudo apt update && sudo apt install -y kubectl=1.28.0-00
 sudo apt-mark hold kubectl
 ```
 
+After the `kubelet` is upgraded, verify the version and that you have access to the cluster:
+
+```sh
+kubectl version -o yaml
+kubectl get nodes
+```
+
 ---
 
 # How it works
