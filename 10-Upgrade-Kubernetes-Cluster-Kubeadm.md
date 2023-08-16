@@ -71,7 +71,7 @@ sudo apt-mark hold kubeadm
 # Step 4: Upgrading first control plane node
 The upgrade procedure on control plane nodes should be executed one node at a time. Pick a control plane node that you wish to upgrade first. It must have the `/etc/kubernetes/admin.conf` file.
 ```sh
-sudo kubeadm upgrade apply v1.28.0-00
+sudo kubeadm upgrade apply v1.28.0
 ```
 
 > [!IMPORTANT]  
