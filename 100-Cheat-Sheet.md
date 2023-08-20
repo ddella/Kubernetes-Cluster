@@ -16,6 +16,10 @@ kubectl api-resources --namespaced=true
 
 # Not in a namespace
 kubectl api-resources --namespaced=false
+
+# Use this command to check the status of all the cluster components:
+kubectl get --raw='/readyz?verbose'
+
 ```
 
 

@@ -6,14 +6,14 @@ We need to run the upgrades in the following order:
 1. Control plane node(s)
 2. Worker Nodes
 
-Also, we need to upgrade the following components on both the control plane and the worker nodes.
+Also, we need to upgrade the following components on both the control plane(s) and the worker nodes.
 
 - Kubeadm
 - Kubelet
 - Kubectl
 
 # Before
-Before we get started you should get the cluster node names with the following command:
+Before we get started, you should get the cluster node names with the following command:
 ```sh
 kubectl get nodes -o wide
 ```
@@ -34,24 +34,20 @@ Following are the high level steps to upgrade the control plane(s):
 Lets get started with the Upgrade.
 
 # Step 1: Check the existing Kubeadm version
-
-Login to the control plane and can check the existing version using the following command.
+Login to the control plane and can check the existing version using the following command. If you have more than one control plane, pick one 😉
 
 ```sh
 kubeadm version -o yaml
 ```
 
 # Step 2: Determine which version to upgrade to
-
-You can get the list of available Kubeadm versions using the following command
-
+You can get the list of available Kubeadm versions using the following command:
 ```sh
 sudo apt update
 sudo apt-cache madison kubeadm | head -5
 ```
 
-Also you can run a kubeadm upgrde plan to get upgrade suggestions.
-
+Also you can run a `kubeadm upgrde plan` to get upgrade suggestions.
 ```sh
 sudo kubeadm upgrade plan --ignore-preflight-errors 'all'
 ```
@@ -59,7 +55,7 @@ sudo kubeadm upgrade plan --ignore-preflight-errors 'all'
 My current version is 1.27.4 and I will be upgrading to version 1.28.0.
 
 # Step 3: unhold kubeadm and Install the required version
-During the `kubeadm` installation, I have hold `kubeadm` to prevent upgrades.
+During the `kubeadm` installation, I have hold `kubeadm`, `kubectl` and `kubelet` to prevent unplanned upgrades.
 
 We need to unhold `kubeadm`, install v1.28.0-00 and hold it again, using the following command.
 ```sh
@@ -71,7 +67,7 @@ sudo apt-mark hold kubeadm
 # Step 4: Upgrading first control plane node
 > [!IMPORTANT]  
 > You do either **Step 4:** or **Step 5:** but not both. 
-> he **Step 4:** is for the first control plane and **Step 5:** is for all other control plane.
+> The **Step 4:** is for the first control plane and **Step 5:** is for all other control plane.
 
 The upgrade procedure on control plane nodes should be executed one node at a time. Pick a control plane node that you wish to upgrade first. It must have the `/etc/kubernetes/admin.conf` file.
 ```sh
@@ -79,7 +75,7 @@ sudo kubeadm upgrade apply v1.28.0
 ```
 
 # Step 5: Upgrading other control plane node(s)
-You do this step only if you have already upgraded one control plane node.
+You do this step only if you have already upgraded one control plane node using the command in **Step 4**.
 ```sh
 sudo kubeadm upgrade node
 ```
@@ -93,14 +89,14 @@ kubectl drain <node-to-drain> --ignore-daemonsets
 >replace `<node-to-drain>` with the name of the node you are draining
 
 # Step 7: Upgrade `kubectl` and `kubelet`
-Upgrade the kubelet and kubectl:
+Upgrade `kubelet` and `kubectl`:
 ```sh
 sudo apt-mark unhold kubelet kubectl
 sudo apt update && sudo apt install -y kubelet=1.28.0-00 kubectl=1.28.0-00
 sudo apt-mark hold kubelet kubectl
 ```
 
-Restart the kubelet:
+Restart `kubelet`:
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl restart kubelet
@@ -116,7 +112,7 @@ kubectl uncordon <node-to-uncordon>
 >replace `<node-to-uncordon>` with the name of your node you are draining
 
 # Step 9: Verify the status of the cluster
-After the `kubelet` is upgraded on all nodes verify that all nodes are available again by running the following command from anywhere `kubectl` can access the cluster:
+After the `kubelet` is upgraded on all control plane nodes verify that all nodes are available again by running the following command from anywhere `kubectl` can access the cluster:
 
 ```sh
 kubectl get nodes
@@ -135,25 +131,25 @@ kubectl get nodes
 The upgrade procedure on worker nodes should be executed one node at a time or few nodes at a time, without compromising the minimum required capacity for running your workloads.
 
 > [!IMPORTANT]  
->You will want to upgrade the control plane nodes before upgrading your Linux Worker nodes.
+>You need to upgrade the control plane nodes before upgrading your Linux Worker nodes.
 
 # Step 1: Unhold `kubeadm` and install the required version
 During the `kubeadm` installation, I have hold `kubeadm` to prevent upgrades.
 
-We need to unhold `kubeadm`, install v1.28.0-00 and hold it again, using the following command.
+We need to unhold `kubeadm`, install v1.28.0-00 and hold it again, using the following commands.
 ```sh
 sudo apt-mark unhold kubeadm
 sudo apt update && sudo apt install -y kubeadm=1.28.0-00
 sudo apt-mark hold kubeadm
 ```
 
-# Step 5: Upgrading worker node
-For worker nodes this upgrades the local kubelet configuration:
+# Step 2: Upgrading worker node
+For worker nodes this upgrades the local `kubelet`:
 ```sh
 sudo kubeadm upgrade node
 ```
 
-# Step 6: Drain the node except daemonsets
+# Step 3: Drain the node except daemonsets
 Prepare the node for maintenance by marking it unschedulable and evicting the workloads:
 ```sh
 kubectl drain <node-to-drain> --ignore-daemonsets
@@ -161,21 +157,21 @@ kubectl drain <node-to-drain> --ignore-daemonsets
 > **Note**
 >replace `<node-to-drain>` with the name of your node you are draining
 
-# Step 7: Upgrade `kubectl` and `kubelet`
-Upgrade the kubelet and kubectl:
+# Step 4: Upgrade `kubectl` and `kubelet`
+Upgrade `kubelet` and `kubectl`:
 ```sh
 sudo apt-mark unhold kubelet kubectl
 sudo apt update && sudo apt install -y kubelet=1.28.0-00 kubectl=1.28.0-00
 sudo apt-mark hold kubelet kubectl
 ```
 
-Restart the kubelet:
+Restart `kubelet`:
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 ```
 
-# Step 8: Uncordon the control plane
+# Step 5: Uncordon the control plane
 Bring the node back online by marking it schedulable:
 ```sh
 kubectl uncordon <node-to-uncordon>
@@ -184,8 +180,8 @@ kubectl uncordon <node-to-uncordon>
 > **Note**
 >replace `<node-to-uncordon>` with the name of your node you are draining
 
-# Step 9: Verify the status of the cluster
-After the `kubelet` is upgraded, verify that the node is available again by running the following command from anywhere `kubectl` can access the cluster:
+# Step 6: Verify the status of the cluster
+After `kubelet` is upgraded, verify that the node is available again by running the following command from anywhere `kubectl` can access the cluster:
 
 ```sh
 kubectl get nodes
@@ -197,21 +193,21 @@ kubectl get nodes
 # References
 [Upgrading Linux nodes](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/upgrading-linux-nodes/)  
 
-Congradulation 🎉🎉🎉
+Congradulation, your cluster should run the latest version of Kubernetes 🎉🎉🎉
 
 ---
 
 # Upgrade jump station
-If you manage your cluster from a `jump station`, don't forget to update `kubectl`
+If you manage your cluster from a `jump station`, don't forget to update `kubectl` on it.
 
+Upgrade `kubectl`:
 ```sh
 sudo apt-mark unhold kubectl
 sudo apt update && sudo apt install -y kubectl=1.28.0-00
 sudo apt-mark hold kubectl
 ```
 
-After the `kubelet` is upgraded, verify the version and that you have access to the cluster:
-
+After `kubelet` is upgraded, verify the version and that you have access to the cluster:
 ```sh
 kubectl version -o yaml
 kubectl get nodes
@@ -221,7 +217,7 @@ kubectl get nodes
 
 # How it works
 
-`kubeadm upgrade apply` does the following:
+`kubeadm upgrade apply` does the following on your first control plane:
 
     Checks that your cluster is in an upgradeable state:
         The API server is reachable
