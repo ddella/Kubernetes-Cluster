@@ -341,7 +341,7 @@ kube-system   kube-scheduler-k8smaster1.isociel.com            1/1     Running  
 The next step is to install a CNI for networking inside your Kubernetes Cluster. You just need one, don't install both 😉
 
 ## Install Calico
-Follow theses steps to install Calico [here](Calico/Calico.md)
+Follow theses steps to install Calico [here](Calico/00-Install-Calico.md)
 
 ## Install Cilium
 Follow theses steps to install Calico [here](Cilium/01-0-Install-Cilium.md)
