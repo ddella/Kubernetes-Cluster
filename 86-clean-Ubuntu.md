@@ -18,3 +18,16 @@ sudo dpkg --list | egrep 'linux-image|linux-headers'
 sudo nala purge linux-headers-6.4.3-060403-generic
 sudo nala purge linux-headers-6.4.3-060403
 ```
+
+# Deleting `netplan`
+I don't know what happened but I deleted `netplan` by mistake. No need to tell you that without networking you can install `netplan` 😉
+
+Here's what I did to to recover my server:
+```sh
+sudo ip address add 192.168.13.xx/24 dev ens33
+sudo ip link set ens33 up
+sudo ip route add default via 192.168.13.1
+# Add a DNS
+sudo vi /etc/resolv.conf
+sudo apt install netplan.io
+```

@@ -43,7 +43,7 @@ I decided to create a `yaml` file for `kubeadm` to bootstrap the K8s cluster. Si
 For the IP addresses assigned to **Pods** and **Services**, I will be using the following:
 - Pods: `100.64.0.0/10`
   - Shared address space for communications between a service provider and its subscribers when using a carrier-grade NAT.
-- Services: `198.18.0.0/15`
+- Services: `198.18.0.0/16`
   - Used for benchmark testing of inter-network communications between two separate subnets.
 
 >Note: Feel free to adjust the IP addresses above
@@ -71,7 +71,7 @@ controlPlaneEndpoint: k8sapi.isociel.com:6443
 networking:
   dnsDomain: cluster.local
   podSubnet: 100.64.0.0/10
-  serviceSubnet: 198.18.0.0/15
+  serviceSubnet: 198.18.0.0/16
 apiServer:
   certSANs:
   - k8smaster1
