@@ -28,12 +28,12 @@ helm upgrade cilium cilium/cilium --version 1.14.0 \
   --set upgradeCompatibility=1.X
 ```
 
-# Rebasing a ConfigMap
+# Rebasing a ConfigMap
 This section describes the procedure to rebase an existing ConfigMap to the template of another version.
 
 ### Export the current ConfigMap
 ```sh
-kubectl get configmap -n kube-system cilium-config -o yaml --export > cilium-cm-old.yaml
+kubectl get configmap -n kube-system cilium-config -o yaml > cilium-cm-old.yaml
 ```
 
 ### Add new options
@@ -49,3 +49,29 @@ kubectl apply -n kube-system -f ./cilium-cm-old.yaml
 # Reference
 [Upgrade Guide](https://docs.cilium.io/en/stable/operations/upgrade/)  
 [GitHub](https://github.com/cilium/cilium-cli)  
+
+---
+helm repo update
+
+helm template cilium/cilium --version 1.14.1 \
+  --namespace=kube-system \
+  --set preflight.enabled=true \
+  --set agent=false \
+  --set operator.enabled=false \
+  --set k8sServiceHost=k8sapi.isociel.com \
+  --set k8sServicePort=6443 \
+  > cilium-preflight.yaml
+
+kubectl create -f cilium-preflight.yaml
+
+kubectl get daemonset -n kube-system | sed -n '1p;/cilium/p'
+
+kubectl get deployment -n kube-system cilium-pre-flight-check -w
+
+kubectl delete -f cilium-preflight.yaml
+
+# Upgrade
+helm upgrade cilium cilium/cilium --version 1.14.1 \
+  --namespace=kube-system \
+  -f old-values.yaml
+

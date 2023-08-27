@@ -20,8 +20,34 @@ kubectl api-resources --namespaced=false
 # Use this command to check the status of all the cluster components:
 kubectl get --raw='/readyz?verbose'
 
-```
+# Check certificate expiration (https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/)
+kubeadm certs check-expiration
 
+# Get the client certificate inside the `kubeconfig` file:
+cat ~/.kube/config | grep client-certificate-data | cut -f2 -d : | tr -d ' ' | base64 -d | openssl x509 -text -noout -
+kubectl config view --raw -o jsonpath='{range .users[*].user}{.client-certificate-data}' | base64 -d | openssl x509 -text -noout -
+kubectl config view --raw -o go-template='{{range .users}}{{index .user "client-certificate-data"}}{{"\n"}}{{end}}' | base64 -d | openssl x509 -text -noout -
+
+# Get the client private key inside the `kubeconfig` file:
+cat ~/.kube/config | grep client-key-data | cut -f2 -d : | tr -d ' ' | base64 -d
+kubectl config view --raw -o jsonpath='{range .users[*].user}{.client-key-data}' | base64 -d
+kubectl config view --raw -o go-template='{{range .users}}{{index .user "client-key-data"}}{{"\n"}}{{end}}' | base64 -d | openssl pkey -inform pem -text -noout -
+
+# Get the CA certificate
+kubectl config view --raw -o go-template='{{range .clusters}}{{index .cluster "certificate-authority-data"}}{{"\n"}}{{end}}' | base64 -d
+
+# Get the API Server URL
+kubectl config view -o go-template='{{range .clusters}}{{.cluster.server}}{{"\n"}}{{end}}'
+
+# Get Deployment
+kubectl get deploy -n kube-system
+
+# Get Node Label (remove node name for ALL)
+kubectl get nodes k8sworker1.isociel.com --show-labels
+
+# Get CoreDNS configuration
+kubectl get configmap -n kube-system coredns -o yaml
+```
 
 # Cilium Cheat Sheet
 ```sh

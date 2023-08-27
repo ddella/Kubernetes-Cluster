@@ -41,6 +41,8 @@ Add the Kubernetes repository:
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 ```
 
+[Changing The Kubernetes Package Repository](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/)  
+
 Update the apt package index, install kubelet, kubeadm and kubectl, and pin their version:
 ```sh
 sudo apt update

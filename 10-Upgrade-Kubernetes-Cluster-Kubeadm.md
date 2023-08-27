@@ -230,7 +230,7 @@ kubectl get nodes
     Applies the new CoreDNS and kube-proxy manifests and makes sure that all necessary RBAC rules are created.
     Creates new certificate and key files of the API server and backs up old files if they're about to expire in 180 days.
 
-`kubeadm upgrade node` does the following on additional control plane nodes:
+`kubeadm upgrade node` does the following on additional control plane nodes if you have an H.A cluster:
 
     Fetches the kubeadm ClusterConfiguration from the cluster.
     Optionally backups the kube-apiserver certificate.
