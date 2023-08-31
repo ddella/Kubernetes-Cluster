@@ -30,7 +30,8 @@ Install Tigera Calico operator and custom resource definitions:
 kubectl create -f tigera-operator.yaml
 ```
 
->**Note**: As per Calico, due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create ...`.
+> **Note**
+>As per Calico, due to the large size of the CRD bundle, `kubectl apply` might exceed request limits. Instead, use `kubectl create ...`.
 
 # Install Calico custom resource definitions
 You need to install Tigera Calico custom resource definitions, but before, make sure the `cidr` value matches the one you passed to `kubeadm init ...` when you bootstrapped your K8s cluster. See below my `custom-resources.yaml` file that I edited:

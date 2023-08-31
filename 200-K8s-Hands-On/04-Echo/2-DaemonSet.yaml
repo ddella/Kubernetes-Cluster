@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: echo-server
+  namespace: echo-server
+  labels:
+  # DaemonSet labels
+    app: echo-server
+spec:
+  selector:
+    matchLabels:
+      name: my-ds
+  template:
+    metadata:
+    # Pods labels
+      labels:
+        name: my-ds
+    spec:
+      initContainers:
+      - name: init
+        image: alpine
+        command: ['/bin/sh', '-c', 'echo "version 1" > /data/version']
+        volumeMounts:
+        - mountPath: /data
+          name: cache-volume
+      containers:
+      - image: alpine
+        name: alpine
+        command: ['/bin/sh', '-c', 'while true; do echo "Hello World, from Pod [$(hostname)] at IP [$(hostname -i)]: $(date)" > /data/index.html; sleep 1; done']
+        resources:
+          limits:
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /data
+          name: cache-volume
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: cache-volume
+        emptyDir:
+          medium: "Memory"
+          sizeLimit: 10Mi

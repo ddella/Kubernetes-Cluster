@@ -26,13 +26,32 @@ curl -LO https://github.com/containerd/containerd/releases/download/v${VER}/cont
 sudo tar Cxzvf /usr/local containerd-${VER}-linux-amd64.tar.gz
 ```
 
+Prepare `containerd` configuration file for K8s:
+```sh
+sudo mkdir /etc/containerd/
+sudo containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+```
+
+Edit the configuration file `/etc/containerd/config.toml`. In the section `[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]`, change the key `SystemdCgroup` to true. You can use the following command or your prefered text editor:
+```sh
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+```
+
+If you don't want to specify the endpoint every time you use the command `crictl`, you can create the file `/etc/crictl.yaml` by specifying the endpoint. If you don't create the file, you'll have to enter the endpoint each time like this: `crictl --runtime-endpoint unix:///run/containerd/containerd.sock ...`
+```sh
+cat <<EOF | sudo tee /etc/crictl.yaml > /dev/null
+runtime-endpoint: unix:///var/run/containerd/containerd.sock
+image-endpoint: unix:///var/run/containerd/containerd.sock
+EOF
+```
+
 If you intend to start `containerd` via `systemd`, you need to download the `containerd.service` file:
 ```sh
 curl -LO https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-sudo mv containerd.service /usr/lib/systemd/system/.
+sudo mv containerd.service /lib/systemd/system/.
+sudo chown root:root /lib/systemd/system/containerd.service
 sudo systemctl daemon-reload
-sudo rm /etc/systemd/system/containerd.service
-sudo ln -s /usr/lib/systemd/system/containerd.service /etc/systemd/system/containerd.service
+sudo systemctl unmask containerd.service
 sudo systemctl enable --now containerd
 ```
 

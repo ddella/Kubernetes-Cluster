@@ -1,0 +1,15 @@
+# kubectl autoscale -n nginx-ns deploy nginx-test --min=3 --max=10 --cpu-percent=80
+# kubectl get hpa -n nginx-ns
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  namespace: nginx-ns
+  name: nginx-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-test
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80

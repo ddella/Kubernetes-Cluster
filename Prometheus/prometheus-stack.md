@@ -59,6 +59,7 @@ prometheus-node-exporter:
 ```
 
 ### Install Prometheus with a customized configuration:
+The following commands can be run on your "jump station".
 ```sh
 kubectl create namespace prometheus
 helm install prometheus prometheus-community/kube-prometheus-stack -f values.yaml
@@ -79,9 +80,12 @@ Visit https://github.com/prometheus-operator/kube-prometheus for instructions on
 ```
 
 # Verify Installation
+You can monitor the installation with the following command:
 ```sh
-kubectl get all -n prometheus
+watch kubectl get all -n prometheus
 ```
+
+Hit <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd> to quit.
 
 Output:
 ```
@@ -98,13 +102,13 @@ pod/prometheus-prometheus-node-exporter-qkjps                1/1     Running   0
 
 NAME                                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
 service/alertmanager-operated                     ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   37s
-service/prometheus-grafana                        ClusterIP   198.19.176.7     <none>        80/TCP                       49s
-service/prometheus-kube-prometheus-alertmanager   ClusterIP   198.19.209.242   <none>        9093/TCP,8080/TCP            49s
-service/prometheus-kube-prometheus-operator       ClusterIP   198.19.171.201   <none>        443/TCP                      49s
-service/prometheus-kube-prometheus-prometheus     ClusterIP   198.19.188.7     <none>        9090/TCP,8080/TCP            49s
-service/prometheus-kube-state-metrics             ClusterIP   198.19.181.191   <none>        8080/TCP                     49s
+service/prometheus-grafana                        ClusterIP   198.18.176.7     <none>        80/TCP                       49s
+service/prometheus-kube-prometheus-alertmanager   ClusterIP   198.18.209.242   <none>        9093/TCP,8080/TCP            49s
+service/prometheus-kube-prometheus-operator       ClusterIP   198.18.171.201   <none>        443/TCP                      49s
+service/prometheus-kube-prometheus-prometheus     ClusterIP   198.18.188.7     <none>        9090/TCP,8080/TCP            49s
+service/prometheus-kube-state-metrics             ClusterIP   198.18.181.191   <none>        8080/TCP                     49s
 service/prometheus-operated                       ClusterIP   None             <none>        9090/TCP                     37s
-service/prometheus-prometheus-node-exporter       ClusterIP   198.19.7.36      <none>        9100/TCP                     49s
+service/prometheus-prometheus-node-exporter       ClusterIP   198.18.7.36      <none>        9100/TCP                     49s
 
 NAME                                                 DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
 daemonset.apps/prometheus-prometheus-node-exporter   4         4         4       4            4           kubernetes.io/os=linux   49s
@@ -133,26 +137,176 @@ Output:
 ```
 NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
 alertmanager-operated                     ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   28h
-prometheus-grafana                        ClusterIP   198.19.176.7     <none>        80/TCP                       28h
-prometheus-kube-prometheus-alertmanager   ClusterIP   198.19.209.242   <none>        9093/TCP,8080/TCP            28h
-prometheus-kube-prometheus-operator       ClusterIP   198.19.171.201   <none>        443/TCP                      28h
-prometheus-kube-prometheus-prometheus     ClusterIP   198.19.188.7     <none>        9090/TCP,8080/TCP            28h
-prometheus-kube-state-metrics             ClusterIP   198.19.181.191   <none>        8080/TCP                     28h
+prometheus-grafana                        ClusterIP   198.18.176.7     <none>        80/TCP                       28h
+prometheus-kube-prometheus-alertmanager   ClusterIP   198.18.209.242   <none>        9093/TCP,8080/TCP            28h
+prometheus-kube-prometheus-operator       ClusterIP   198.18.171.201   <none>        443/TCP                      28h
+prometheus-kube-prometheus-prometheus     ClusterIP   198.18.188.7     <none>        9090/TCP,8080/TCP            28h
+prometheus-kube-state-metrics             ClusterIP   198.18.181.191   <none>        8080/TCP                     28h
 prometheus-operated                       ClusterIP   None             <none>        9090/TCP                     28h
-prometheus-prometheus-node-exporter       ClusterIP   198.19.7.36      <none>        9100/TCP                     28h
+prometheus-prometheus-node-exporter       ClusterIP   198.18.7.36      <none>        9100/TCP                     28h
 ```
-The Prometheus server is `prometheus-kube-prometheus-prometheus     ClusterIP   198.19.188.7     <none>        9090/TCP,8080/TCP            28h`
+The Prometheus server is `prometheus-kube-prometheus-prometheus     ClusterIP   198.18.188.7     <none>        9090/TCP,8080/TCP            28h`
 
-COnfigure port-forwarding:
+> [!IMPORTANT]  
+> You will most probably run the following command from a "jump station", at least that's my case.
+> You can test with the web server with `curl` **from your "jump station"**.
+
+Configure port-forwarding (**from your "jump station"**):
 ```sh
 kubectl port-forward -n prometheus prometheus-prometheus-kube-prometheus-prometheus-0 9090
 ```
 
-Start a browser on the same machine and type the URL `http://127.0.0.1:9090`
+Test with `curl` (**from your "jump station"**)
+```sh
+curl http://127.0.0.1:9090
+```
+
+Your output should be similar as this:
+```
+<a href="/graph">Found</a>.
+```
+
+## Edit Prometheus Service
+I have dynamic routing in my cluster with ToR router. I configured an external IP for the service. I can now reach the web page from any workstation:
+```sh
+kubectl edit service -n prometheus prometheus-kube-prometheus-prometheus
+```
+
+Add the following under `ports`, save and quit:
+```yaml
+  externalIPs:
+    - 198.19.0.90
+```
+
+Open your favorite browser and use the url: `http://198.19.0.90:9090/`
+
+## Edit Grafana Service
+Add external IP for Grafana:
+```sh
+kubectl edit service -n prometheus prometheus-grafana
+```
+
+Add the following under `ports`, save and quit:
+```yaml
+  externalIPs:
+    - 198.19.0.91
+```
+
+Open your favorite browser and use the url: `http://198.19.0.91/login`
+
+# Fixing Errors
+I had some *unhealthy service monitor*. Let's try to fix them.
+
+![unhealthy service monitor](images/unhealthy.jpg)
+
+## kube-controller-scheduler
+You need to be on a master node. Edit the configuration file of the controller manager:
+```sh
+sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml
+```
+
+You either need to have `--bind-address=0.0.0.0` or if you are using control-plane IP, you need to change `livenessProbe` and `startupProbe` host, too.
+```yaml
+...
+spec:
+  containers:
+  - command:
+...
+    - --bind-address=192.168.13.61
+...
+      httpGet:
+        host: 192.168.13.61
+        path: /healthz
+...
+      httpGet:
+        host: 192.168.13.61
+        path: /healthz
+```
+
+No need to restart anything. K8s will pickup the change anld restart the Pod `kube-controller-manager-XXXXXXX` for you.
+
+[kube-prometheus-stack issue scraping metrics](https://stackoverflow.com/questions/65901186/kube-prometheus-stack-issue-scraping-metrics/66276144#66276144)  
+
+## kube-controller-manager
+You need to be on a master node. Edit the configuration file of the controller manager:
+```sh
+sudo vi /etc/kubernetes/manifests/kube-controller-manager.yaml
+```
+
+You either need to have `--bind-address=0.0.0.0` or if you are using control-plane IP, you need to change `livenessProbe` and `startupProbe` host, too.
+```yaml
+...
+spec:
+  containers:
+  - command:
+...
+    - --bind-address=192.168.13.61
+...
+      httpGet:
+        host: 192.168.13.61
+        path: /healthz
+...
+      httpGet:
+        host: 192.168.13.61
+        path: /healthz
+```
+
+No need to restart anything. K8s will pickup the change anld restart the Pod `kube-controller-manager-XXXXXXX` for you
+
+[kube-prometheus-stack issue scraping metrics](https://stackoverflow.com/questions/65901186/kube-prometheus-stack-issue-scraping-metrics/66276144#66276144)  
+
+## kube-proxy
+This is the fix if you get Kubernetes proxy down alert for all the nodes in Prometheus.
+
+Set the kube-proxy argument for metric-bind-address:
+```sh
+kubectl edit cm/kube-proxy -n kube-system
+```
+
+```yaml
+...
+kind: KubeProxyConfiguration
+metricsBindAddress: 0.0.0.0:10249
+...
+```
+
+Restart all `kube-proxy` Pods:
+```sh
+kubectl delete pod -l k8s-app=kube-proxy -n kube-system
+```
+
+[All Kubernetes proxy targets down - Prometheus Operator](https://stackoverflow.com/questions/60734799/all-kubernetes-proxy-targets-down-prometheus-operator)  
+
+## prometheus-kube-prometheus-kube-etcd
+
+> [!IMPORTANT]  
+>If you bootstrapped your cluster using `kubeadm`, it has configured `etcd` with `--listen-metrics-urls` on `http`, which does not require any certificates.
+
+Add the IP address of control-plane. You need to **be on a control plane** to edit the file:
+```sh
+sudo vi /etc/kubernetes/manifests/etcd.yaml
+```
+
+In my case I just added this `,http://192.168.13.61:2381`
+```yaml
+    - --listen-metrics-urls=http://127.0.0.1:2381,http://192.168.13.61:2381
+```
+
+Uncomment the following lines and make sure to use `http`:
+```yaml
+  serviceMonitor:
+    scheme: http
+    serverName: localhost
+```
+
+Reapply the new configuration:
+```sh
+helm upgrade prometheus prometheus-community/kube-prometheus-stack -f values.yaml
+```
+
+[](https://github.com/prometheus-community/helm-charts/issues/204#issuecomment-765155883)  
 
 # Prometheus Configuration
-
-
 
 ---
 # Uninstall Helm Chart (just in case 😀)
@@ -185,12 +339,15 @@ Delete the namespace:
 kubectl delete ns prometheus
 ```
 
-## If you want to remove the images, go on each node (master and worker) and:
+## If you want to remove the images
+Go on each node (master and worker) and delete the images related to Prometheus and Grafana.
+
 1. List the image(s)
 
 List the local images:
 ```sh
 crictl images ls
+sudo nerdctl -n k8s.io image ls
 ```
 
 The ouput should look like this:
@@ -207,9 +364,63 @@ quay.io/prometheus/prometheus                            v2.44.0             759
 2. Delete the image(s) with the command:
 ```sh
 crictl rmi <IMAGE ID>
+sudo nerdctl -n k8s.io image rm <IMAGE ID>
 ```
+
 # References
 [Kubernetes Monitoring Made Easy with Prometheus | KodeKloud](https://www.youtube.com/watch?v=6xmWr7p5TE0)  
 [helm-charts](https://github.com/prometheus-community/helm-charts)  
 [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md)  
 [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus)  
+
+# Advanced Configuration
+**INCOMPLETE**
+
+## Prometheus Configuration
+
+Get all StatefulSet:
+```sh
+kubectl get statefulset -n prometheus
+```
+
+```sh
+kubectl describe statefulset -n prometheus prometheus-prometheus-kube-prometheus-prometheus > prometheus.yaml
+```
+
+The secret is:
+```yaml
+   config:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  prometheus-prometheus-kube-prometheus-prometheus
+```
+
+The rules are:
+```yaml
+   prometheus-prometheus-kube-prometheus-prometheus-rulefiles-0:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      prometheus-prometheus-kube-prometheus-prometheus-rulefiles-0
+```
+
+Grab the `SecretName` above:
+```sh
+kubectl describe secrets -n prometheus prometheus-prometheus-kube-prometheus-prometheus
+```
+
+Grab the `Name` of the `ConfigMap` above:
+```sh
+kubectl describe configmap -n prometheus prometheus-prometheus-kube-prometheus-prometheus-rulefiles-0 > rulefile.yaml
+```
+
+> [!NOTE]  
+> This stores the rulefiles.
+
+## Operator Config
+
+Get all the Deployments:
+```sh
+kubectl get deploy -n prometheus
+```
+
+```sh
+kubectl describe deploy -n prometheus prometheus-kube-prometheus-operator > operator.yaml
+```

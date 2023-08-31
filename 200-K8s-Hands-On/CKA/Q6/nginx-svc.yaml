@@ -1,0 +1,17 @@
+# kubectl expose deployment nginx-test -n nginx-ns --port=80 --target-port=8080 --dry-run=client -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  namespace: nginx-ns
+  labels:
+    run: nginx-svc
+    color: red
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    run: nginx-test
