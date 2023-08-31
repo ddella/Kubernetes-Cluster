@@ -60,7 +60,6 @@ Session Affinity:  None
 Events:            <none>
 ```
 
-
 ## Web Server
 From any K8s cluster node, you can do the following:
 ```sh
@@ -81,4 +80,4 @@ kubectl create -f 1-namespace.yaml
 ```
 
 > [!NOTE]  
-> Deleting the namespace is sufficient.
+> Deleting the namespace should be sufficient.

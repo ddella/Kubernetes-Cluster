@@ -26,17 +26,21 @@ helm show chart prometheus-community/prometheus | grep ^appVersion
 ```
 
 ### Customize Chart Values
-Get the values of the chart: 
+Get the values of the chart:
 ```sh
 helm show values prometheus-community/kube-prometheus-stack > values.yaml
 ```
 
-I prefer running Prometheus in it's own namespace:
+> [!NOTE]  
+> Keep the file `values.yaml`, we will need it to correct some errors 😉
+
+Let's modify the namespace where Prometheus Pods will run in. I prefer running Prometheus in it's own namespace:
 ```sh
 sed -i 's/namespaceOverride: ""/namespaceOverride: "prometheus"/g' values.yaml
 ```
 
-```
+There's four namespaces variable that will be modified:
+```yaml
 ## Override the deployment namespace
 ##
 namespaceOverride: "prometheus"
@@ -87,7 +91,7 @@ watch kubectl get all -n prometheus
 
 Hit <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>C</kbd> to quit.
 
-Output:
+You're output should be similar:
 ```
 NAME                                                         READY   STATUS    RESTARTS   AGE
 pod/alertmanager-prometheus-kube-prometheus-alertmanager-0   2/2     Running   0          37s
@@ -145,37 +149,21 @@ prometheus-kube-state-metrics             ClusterIP   198.18.181.191   <none>   
 prometheus-operated                       ClusterIP   None             <none>        9090/TCP                     28h
 prometheus-prometheus-node-exporter       ClusterIP   198.18.7.36      <none>        9100/TCP                     28h
 ```
+
 The Prometheus server is `prometheus-kube-prometheus-prometheus     ClusterIP   198.18.188.7     <none>        9090/TCP,8080/TCP            28h`
 
-> [!IMPORTANT]  
-> You will most probably run the following command from a "jump station", at least that's my case.
-> You can test with the web server with `curl` **from your "jump station"**.
-
-Configure port-forwarding (**from your "jump station"**):
-```sh
-kubectl port-forward -n prometheus prometheus-prometheus-kube-prometheus-prometheus-0 9090
-```
-
-Test with `curl` (**from your "jump station"**)
-```sh
-curl http://127.0.0.1:9090
-```
-
-Your output should be similar as this:
-```
-<a href="/graph">Found</a>.
-```
-
 ## Edit Prometheus Service
-I have dynamic routing in my cluster with ToR router. I configured an external IP for the service. I can now reach the web page from any workstation:
+I have dynamic routing in my cluster with `ToR` router. I configured `EXTERNAL-IP` for the Prometheus web service. I can now reach the web page from any workstation:
 ```sh
 kubectl edit service -n prometheus prometheus-kube-prometheus-prometheus
 ```
 
-Add the following under `ports`, save and quit:
+Add the following under `spec`, save and quit. Use your own `EXTERNAL-IP` IP address:
 ```yaml
+spec:
+...
   externalIPs:
-    - 198.19.0.90
+  - 198.19.0.90
 ```
 
 Open your favorite browser and use the url: `http://198.19.0.90:9090/`
@@ -186,21 +174,30 @@ Add external IP for Grafana:
 kubectl edit service -n prometheus prometheus-grafana
 ```
 
-Add the following under `ports`, save and quit:
+Add the following under `spec`, save and quit:
 ```yaml
+spec:
+...
   externalIPs:
-    - 198.19.0.91
+  - 198.19.0.91
 ```
 
 Open your favorite browser and use the url: `http://198.19.0.91/login`
 
 # Fixing Errors
-I had some *unhealthy service monitor*. Let's try to fix them.
+In the preceding steps, we have deployed `kube-prometheus` stack on a Kubernetes Cluster with `helm`. Almost everything worked except the following Targets:
+
+- Targets kube-prometheus-stack-kube-controller-manager are down
+- Targets kube-prometheus-stack-kube-etcd are down
+- Targets kube-prometheus-stack-kube-proxy are down
+- Targets kube-prometheus-stack-kube-scheduler are down
 
 ![unhealthy service monitor](images/unhealthy.jpg)
 
+Let's try to fix them.
+
 ## kube-controller-scheduler
-You need to be on a master node. Edit the configuration file of the controller manager:
+You need to **be on a control plane**. Edit the configuration file of the controller manager:
 ```sh
 sudo vi /etc/kubernetes/manifests/kube-scheduler.yaml
 ```
@@ -223,12 +220,12 @@ spec:
         path: /healthz
 ```
 
-No need to restart anything. K8s will pickup the change anld restart the Pod `kube-controller-manager-XXXXXXX` for you.
+No need to restart anything. K8s will pickup the change and will restart the Pod `kube-scheduler-XXXXXXX` for you.
 
 [kube-prometheus-stack issue scraping metrics](https://stackoverflow.com/questions/65901186/kube-prometheus-stack-issue-scraping-metrics/66276144#66276144)  
 
 ## kube-controller-manager
-You need to be on a master node. Edit the configuration file of the controller manager:
+You need to **be on a control plane**. Edit the configuration file of the controller manager:
 ```sh
 sudo vi /etc/kubernetes/manifests/kube-controller-manager.yaml
 ```
@@ -251,14 +248,14 @@ spec:
         path: /healthz
 ```
 
-No need to restart anything. K8s will pickup the change anld restart the Pod `kube-controller-manager-XXXXXXX` for you
+No need to restart anything. K8s will pickup the change and restart the Pod `kube-controller-manager-XXXXXXX` for you
 
 [kube-prometheus-stack issue scraping metrics](https://stackoverflow.com/questions/65901186/kube-prometheus-stack-issue-scraping-metrics/66276144#66276144)  
 
 ## kube-proxy
 This is the fix if you get Kubernetes proxy down alert for all the nodes in Prometheus.
 
-Set the kube-proxy argument for metric-bind-address:
+Set the kube-proxy argument for `metricsBindAddress`:
 ```sh
 kubectl edit cm/kube-proxy -n kube-system
 ```
@@ -292,7 +289,7 @@ In my case I just added this `,http://192.168.13.61:2381`
     - --listen-metrics-urls=http://127.0.0.1:2381,http://192.168.13.61:2381
 ```
 
-Uncomment the following lines and make sure to use `http`:
+Uncomment the following lines and make sure to use `scheme: http` NOT `https`:
 ```yaml
   serviceMonitor:
     scheme: http
@@ -304,17 +301,21 @@ Reapply the new configuration:
 helm upgrade prometheus prometheus-community/kube-prometheus-stack -f values.yaml
 ```
 
-[](https://github.com/prometheus-community/helm-charts/issues/204#issuecomment-765155883)  
+[Targets Down](https://github.com/prometheus-community/helm-charts/issues/204#issuecomment-765155883)  
 
-# Prometheus Configuration
+# Congrats!!!
+
+You should have Prometheus installed 🎉 🎉 🎉 🥳 🥳 🥳
 
 ---
+
 # Uninstall Helm Chart (just in case 😀)
 If you ever want to uninstall Prometheus completely, use the commands below:
 ```sh
 helm uninstall prometheus
 kubectl delete ns prometheus
 ```
+
 CRDs created by this chart are not removed by default and should be manually cleaned up:
 ```sh
 kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
@@ -329,28 +330,21 @@ kubectl delete crd servicemonitors.monitoring.coreos.com
 kubectl delete crd thanosrulers.monitoring.coreos.com
 ```
 
-You shouldn't see anything in the namespace `prometheus`
+## If you want to remove the images (Optional)
+You should clean the images on every nodes in your K8s Cluster.
+
+You need to be on each node (master and worker) and delete the images related to Prometheus and Grafana.
+
+> [!IMPORTANT]  
+> You use either `crictl` or `nerdctl` but **NOT** both.
+
+1. List the local images (**USE ONE COMMAND ONLY**):
 ```sh
-kubectl get all -n prometheus
-```
-
-Delete the namespace:
-```sh
-kubectl delete ns prometheus
-```
-
-## If you want to remove the images
-Go on each node (master and worker) and delete the images related to Prometheus and Grafana.
-
-1. List the image(s)
-
-List the local images:
-```sh
-crictl images ls
+sudo crictl images ls
 sudo nerdctl -n k8s.io image ls
 ```
 
-The ouput should look like this:
+The ouput should look like this, you milage may vary:
 ```
 IMAGE                                                    TAG                 IMAGE ID            SIZE
 ...
@@ -361,9 +355,9 @@ quay.io/prometheus/prometheus                            v2.44.0             759
 ...
 ```
 
-2. Delete the image(s) with the command:
+2. Delete the image(s) with the command (**USE ONE COMMAND ONLY**):
 ```sh
-crictl rmi <IMAGE ID>
+sudo crictl rmi <IMAGE ID>
 sudo nerdctl -n k8s.io image rm <IMAGE ID>
 ```
 
@@ -372,6 +366,8 @@ sudo nerdctl -n k8s.io image rm <IMAGE ID>
 [helm-charts](https://github.com/prometheus-community/helm-charts)  
 [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md)  
 [kube-prometheus](https://github.com/prometheus-operator/kube-prometheus)  
+
+---
 
 # Advanced Configuration
 **INCOMPLETE**
