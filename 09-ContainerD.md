@@ -55,6 +55,23 @@ sudo systemctl unmask containerd.service
 sudo systemctl enable --now containerd
 ```
 
+### Fix issue with 
+To get rid of the warning message below when doing `kubeadm init`:
+```
+W0714 13:38:17.059546   33985 checks.go:835] detected that the sandbox image "registry.k8s.io/pause:3.6" of the container runtime is inconsistent with that used by kubeadm. It is recommended that using "registry.k8s.io/pause:3.9" as the CRI sandbox image.
+```
+
+Change the container version:
+```sh
+sudo sed -i 's/sandbox_image \= \"registry.k8s.io\/pause:3.6\"/sandbox_image \= \"registry.k8s.io\/pause:3.9\"/' /etc/containerd/config.toml
+```
+
+Restart the service and check it's status:
+```sh
+sudo systemctl restart containerd
+sudo systemctl status containerd
+```
+
 ## Step 2: Installing `runc`
 Download the runc.<ARCH> binary and install it in `/usr/local/sbin/runc`.
 

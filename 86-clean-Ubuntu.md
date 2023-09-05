@@ -12,18 +12,28 @@ sudo journalctl --vacuum-time=3d
 dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr | head -20
 ```
 
-# List old Kernels
+# List Kernels
+List all Kernels installed on the system:
 ```sh
 sudo dpkg --list | egrep 'linux-image|linux-headers|linux-modules'
 ```
 
-Clean the old kernels with:
-
+## Cleanup
+Before cleaning the old Kernels, update the system and reload:
 ```sh
-sudo nala purge -y linux-headers-6.4.3-060403-generic
-sudo nala purge -y linux-headers-6.4.3-060403
-sudo nala purge -y linux-modules-6.4.3-060403-generic
+sudo nala update && sudo nala upgrade
+sudo init 6
 ```
+
+Clean the old kernels with:
+```sh
+sudo nala purge -y linux-headers-6.4.12-060412-generic
+sudo nala purge -y linux-headers-6.4.12-060412
+sudo nala purge -y linux-image-unsigned-6.4.12-060412-generic
+sudo nala purge -y linux-modules-6.4.12-060412-generic
+```
+
+---
 
 # Deleting `netplan`
 I don't know what happened but I deleted `netplan` by mistake. No need to tell you that without networking you can install `netplan` 😉
