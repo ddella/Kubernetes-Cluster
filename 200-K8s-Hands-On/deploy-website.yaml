@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nwebsiteginx-deployment
+  name: nginx-deployment
   labels:
     app: website
 spec:

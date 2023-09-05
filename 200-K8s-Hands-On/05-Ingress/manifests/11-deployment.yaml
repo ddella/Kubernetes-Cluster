@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $COLOR-$VERSION-dp
+  namespace: $COLOR-ns
+  labels:
+    app: $COLOR-$VERSION
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: $COLOR-$VERSION
+  template:
+    metadata:
+      labels:
+        app: $COLOR-$VERSION
+    spec:
+      initContainers:
+      - name: init
+        image: alpine
+        command: ["/bin/sh","-c"]
+        args:
+        - mkdir -p /data/version/;
+          mkdir -p /data/type/;
+          echo "version $VERSION" > /data/version/index.html;
+          echo "$COLOR deployment" > /data/type/index.html;
+        volumeMounts:
+        - mountPath: /data
+          name: cache-volume
+      containers:
+      - image: alpine
+        name: alpine
+        command: ['/bin/sh', '-c', 'while true; do echo "Hello World, from $COLOR Pod version: $VERSION [$(hostname)] at IP [$(hostname -i)]: $(date)" > /data/index.html; sleep 1; done']
+        resources:
+          limits:
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /data
+          name: cache-volume
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            memory: 50Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: cache-volume
+        emptyDir:
+          medium: "Memory"
+          sizeLimit: 1Mi

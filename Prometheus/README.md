@@ -9,8 +9,7 @@ Please refer to this [documentation](./prometheus-stack.md) to get started.
 
 ## License
 
-<!-- Keep full URL links to repo files because this README syncs from main to gh-pages.  -->
-[Apache 2.0 License](https://github.com/prometheus-community/helm-charts/blob/main/LICENSE).
+[MIT License](./LICENSE).
 
 ## Helm charts build status
 

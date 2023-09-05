@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: $COLOR-ingress
+  namespace: $COLOR-ns
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: $COLOR.isociel.com
+    http:
+      paths:
+        - pathType: Prefix
+          path: /
+          backend:
+            service:
+              name: $COLOR-$VERSION-svc
+              port:
+                number: 80

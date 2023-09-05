@@ -94,6 +94,11 @@ certificatesDir: /etc/kubernetes/pki
 controllerManager:
   extraArgs:
     "node-cidr-mask-size": "24"
+# ---
+# Uncomment to use "IPVS" instead of "IPTABLES"
+# apiVersion: kubeproxy.config.k8s.io/v1alpha1
+# kind: KubeProxyConfiguration
+# mode: ipvs
 EOF
 ```
 

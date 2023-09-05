@@ -14,9 +14,15 @@ dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr | head -20
 
 # List old Kernels
 ```sh
-sudo dpkg --list | egrep 'linux-image|linux-headers'
-sudo nala purge linux-headers-6.4.3-060403-generic
-sudo nala purge linux-headers-6.4.3-060403
+sudo dpkg --list | egrep 'linux-image|linux-headers|linux-modules'
+```
+
+Clean the old kernels with:
+
+```sh
+sudo nala purge -y linux-headers-6.4.3-060403-generic
+sudo nala purge -y linux-headers-6.4.3-060403
+sudo nala purge -y linux-modules-6.4.3-060403-generic
 ```
 
 # Deleting `netplan`
