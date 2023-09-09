@@ -61,8 +61,14 @@ nodeRegistration:
 localAPIEndpoint:
   advertiseAddress: 192.168.13.61
   bindPort: 6443
-skipPhases:
-  - addon/kube-proxy
+# Uncomment if you DON'T want to install "kube-proxy"
+# skipPhases:
+#   - addon/kube-proxy
+---
+# Comment if you DON'T want to use "IPVS" and prefer to use the default "IPTABLES"
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: ipvs
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
@@ -94,13 +100,21 @@ certificatesDir: /etc/kubernetes/pki
 controllerManager:
   extraArgs:
     "node-cidr-mask-size": "24"
-# ---
-# Uncomment to use "IPVS" instead of "IPTABLES"
-# apiVersion: kubeproxy.config.k8s.io/v1alpha1
-# kind: KubeProxyConfiguration
-# mode: ipvs
 EOF
 ```
+
+### IP addresses
+
+- Pods IP address: is the pool of IP's assign to Pods (managed by Kubernetes)
+- Cluster IP: is the pool of IP's assign to service (managed by Kubernetes)
+- External IP: is the pool of IP's assign to external load balancer (NOT managed by Kubernetes)
+
+|Pods IP address|Cluster IP|External IP*|
+|----|----|----|
+|100.64.0.0/10|198.18.0.0/16|198.19.0.0/16*|
+
+> [!IMPORTANT]  
+> *External IP addresses are NOT managed by Kubernetes. If you have your own On Prem Cluster, it's managed by you 🙂
 
 ## Bootstrap the cluster
 Run the following command to bootstrap `k8smaster1` and create the cluster:
@@ -346,7 +360,7 @@ kube-system   kube-scheduler-k8smaster1.isociel.com            1/1     Running  
 The next step is to install a CNI for networking inside your Kubernetes Cluster. You just need one, don't install both 😉
 
 ## Install Calico
-Follow theses steps to install Calico [here](Calico/00-Install-Calico.md)
+Follow theses steps to install Calico [here](Calico/00-Install-Calico-Kube-Proxy.md)
 
 ## Install Cilium
 Follow theses steps to install Calico [here](Cilium/01-0-Install-Cilium.md)

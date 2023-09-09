@@ -190,6 +190,9 @@ source ~/.bashrc
 ```
 
 ## Use `crictl` without sudo
+> [!IMPORTANT]  
+> This should be done locally on a K8s node.
+
 By default each time you run the command `crictl` you'll need to prefix it with `sudo`. You can change the group permission of the API socket by:
 - adding a new group like `crictl`
 - add your user(s) to the group `crictl`

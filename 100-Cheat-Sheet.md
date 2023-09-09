@@ -47,6 +47,12 @@ kubectl get nodes k8sworker1.isociel.com --show-labels
 
 # Get CoreDNS configuration
 kubectl get configmap -n kube-system coredns -o yaml
+
+# Get Pods version and registry
+kubectl get pods --all-namespaces -o jsonpath="{.items[*].spec.containers[*].image}" | tr -s '[[:space:]]' '\n' | uniq -c | sort -r
+
+# Get the cluster name
+kubectl cluster-info dump | grep "\-\-cluster-name" | tr -d '[:blank:] , "'
 ```
 
 # Cilium Cheat Sheet

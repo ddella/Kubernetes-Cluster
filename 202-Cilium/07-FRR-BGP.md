@@ -1,9 +1,9 @@
 # FRR
 FRRouting (FRR) is a free and open source Internet routing protocol suite for Linux and Unix platforms. It implements BGP, OSPF, RIP, IS-IS, PIM, LDP, BFD, Babel, PBR, OpenFabric and VRRP, with alpha support for EIGRP and NHRP.
 
-FRR’s seamless integration with native Linux/Unix IP networking stacks makes it a general purpose routing stack applicable to a wide variety of use cases including connecting hosts/VMs/containers to the network, advertising network services, LAN switching and routing, Internet access routers, and Internet peering.
+FRR's seamless integration with native Linux/Unix IP networking stacks makes it a general purpose routing stack applicable to a wide variety of use cases including connecting hosts/VMs/containers to the network, advertising network services, LAN switching and routing, Internet access routers, and Internet peering.
 
-FRR has its roots in the Quagga project. In fact, it was started by many long-time Quagga developers who combined their efforts to improve on Quagga’s well-established foundation in order to create the best routing protocol stack available. We invite you to participate in the FRRouting community and help shape the future of networking.
+FRR has its roots in the Quagga project. In fact, it was started by many long-time Quagga developers who combined their efforts to improve on Quagga's well-established foundation in order to create the best routing protocol stack available. We invite you to participate in the FRRouting community and help shape the future of networking.
 
 # FRR
 In this tutorial we will focus on how to install FRR on Ubuntu distro.
@@ -14,9 +14,9 @@ Follow theses steps to install FRR on Debian/Ubuntu system:
 # add GPG key
 curl -s https://deb.frrouting.org/frr/keys.gpg | sudo tee /usr/share/keyrings/frrouting.gpg > /dev/null
 
-# possible values for FRRVER: frr-8 frr-stable
+# possible values for FRRVER: frr-stable frr-8 frr-8
 # frr-8 will be the latest release
-FRRVER="frr-8"
+FRRVER="frr-stable"
 echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
 
 # update and install FRR

@@ -85,12 +85,23 @@ For this tutorial, we will install [containerd](https://containerd.io/) as our C
 
 Use [this page](./09-ContainerD.md)
 
+## Install `ipvs`
+Kube-proxy can run in one of three modes, each implemented with different data plane technologies:
+- userspace
+- iptables
+- IPVS
+
+I strongly suggest to use `ipvs`. You will need to install it. Follow the instruction [here](./88-IPVS.md) to install `ipvs` on Ubuntu 22.04.
+
 # Stop 
 Congratulations! You have a fully functional Linux Ubuntu 22.04 ready to be part in a Kubernetes Cluster as either a master or worker node 🎉  
 
+The next steps are:
+- BootStrap the Cluster
+- Join more Master and Worker Nodes
+
 <a name="k8s-master"></a>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 # Next Steps 
 The next steps would be to configure one and more K8s master node.
 
