@@ -14,7 +14,7 @@ We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.12
 - Some infrastructure to copy files between hosts. For example `ssh` and `scp` can satisfy this requirement.
 
 # Setup an External ETCD Cluster
-In this tutorial we will configure a three-node TLS enabled `etcd` cluster that can act as an external datastore for a H.A. software, like a Kubernetes H.A. Cluster 😉
+In this tutorial we will configure a three-node TLS enabled `etcd` cluster that can act as an external datastore, like a Kubernetes H.A. Cluster 😉
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
@@ -37,12 +37,12 @@ echo ${VER}
 curl -LO https://github.com/etcd-io/etcd/releases/download/${VER}/etcd-${VER}-linux-amd64.tar.gz
 tar xvf etcd-${VER}-linux-amd64.tar.gz
 cd etcd-${VER}-linux-amd64
-sudo cp etcdctl etcdutl etcd /usr/local/bin/
-sudo chown root:adm /usr/local/bin/etcdctl /usr/local/bin/etcdutl /usr/local/bin/etcd
+sudo install etcd etcdctl etcdutl -m 755 -o root -g adm /usr/local/bin/
 ```
 
 ## Verify installation
 ```sh 
+etcd --version
 etcdctl version
 etcdutl version
 ```
@@ -59,16 +59,17 @@ unset VER
 We will use the `Openssl` tool to generate our own CA and all the `etcd` server certificates and keys.
 
 ## Generate Private CA
+This script will generate a CA certificate with its private key. The argument is the prefix of both files created:
 ```sh
-./11-ecc_gen_chain.sh
+./11-ecc_CA.sh etcd-ca
 ```
 
 This results in two files
 - `etcd-ca.crt` is the CA certificate
 - `etcd-ca.key` is the CA private key
 
-## Generate Server Certificates
-We will generate the certificate and key for every `etcd` node in the cluster. Delete the `csr` files as they are not needed anymore:
+## Generate Node Certificates
+You could use the same client certificate of every `etcd` node and it will work fine. I've decided to use different certificate for each node. This will generate the certificate and key for every `etcd` node in the cluster. Delete the `csr` files as they are not needed anymore:
 ```sh
 ./12-gen_cert.sh k8setcd1 192.168.13.35 etcd-ca
 ./12-gen_cert.sh k8setcd2 192.168.13.36 etcd-ca
@@ -76,7 +77,7 @@ We will generate the certificate and key for every `etcd` node in the cluster. D
 rm -f *.csr
 ```
 
-This results in two files for each `etcd` node. The `.crt` is the certificate and the `.key` is the private key:
+This results in two files per `etcd` node. The `.crt` is the certificate and the `.key` is the private key:
 - k8setcd1.crt
 - k8setcd1.key
 - k8setcd2.crt
@@ -99,7 +100,7 @@ We need to to distribute these certificates and keys to each `etcd` node in the 
 ```
 
 # Move Certificate and Key
-SSH into each node and run the below commands to move the certificate and key into the `/etc/etcd/pki` directory. I will be using `tmux` to run the commands on every node at the same time. Just paste the following in each node. The certificates and keys have the short hostname and the variable `ETCD_NAME` will be different on each node.
+SSH into each `etcd` node and run the below commands to move the certificate and key into the `/etc/etcd/pki` directory. I will be using `tmux` to run the commands on every node at the same time. Just paste the following in each node. The certificates and keys have the short hostname and the variable `ETCD_NAME` will be different on each node.
 ```sh
 ETCD_NAME=$(hostname -s)
 sudo mkdir -p /etc/etcd/pki
@@ -187,7 +188,7 @@ EOF
 > The endpoint `listen-client-urls` still answers to `https://.../metrics`.
 
 # Configuring and Starting the `etcd` Cluster
-On every node, create the file `/etc/systemd/system/etcd.service` with the following contents. I will be using `tmux`:
+On every node, create the file `/etc/systemd/system/etcd.service` with the following contents. I will be using `tmux` to execute the command once aon all the nodes:
 ```sh
 cat <<EOF | sudo tee /lib/systemd/system/etcd.service
 [Unit]
@@ -219,16 +220,19 @@ sudo systemctl status etcd
 To interact with the cluster we will be using `etcdctl`. It's the utility to interact with the `etcd` cluster. This utility as been installed in `/usr/local/bin` on three nodes and I also installed it on a bastion host.
 
 > [!NOTE]  
-> Unless otherwise specified, all the `etcdctl` commands are run from a bastion host.
+> Unless otherwise specified, all the `etcdctl` commands are run from a bastion host. I try not to be on any `etcd` node if possible.
 
 You can export these environment variables and connect to the clutser without specifying the values each time:
 ```sh
-export ETCDCTL_API=3
 export ETCDCTL_ENDPOINTS=https://k8setcd1:2379,https://k8setcd2.isociel.com:2379,https://192.168.13.37:2379
 export ETCDCTL_CACERT=./etcd-ca.crt
 export ETCDCTL_CERT=./k8setcd1.crt
 export ETCDCTL_KEY=./k8setcd1.key
 ```
+
+> [!NOTE]  
+> `export ETCDCTL_API=3` is not needed anymore with version 3.4.x
+> You can use any client certificate/key. They are all signed by the same CA.
 
 ## Check Cluster status
 To execute the next command, you can be on any host that:
@@ -276,7 +280,7 @@ etcdctl --write-out=table endpoint health
 +-----------------------------------+--------+--------------+-------+
 ```
 
->For the `--endpoints`, enter all of your nodes and test with the short hostname, FQDN and IP address.
+>For the `--endpoints`, enter all of your nodes. I used the short hostname, FQDN and IP address.
 
 ## Check the logs
 > [!NOTE]  
@@ -288,16 +292,28 @@ journalctl -xeu etcd.service
 ```
 
 ## Write and Read test
-
+We'll write a KV pair and read it:
 **STEP1:** Write a value on one node:
 ```sh
-etcdctl put foo "Hello World!"
+etcdctl put key1 "Hello World!"
 ```
 
-**STEP2:** Read the data back from a different node:
+**STEP2:** Read the data back:
 ```sh
-etcdctl get foo
-etcdctl --write-out="json" get foo
+etcdctl get key1
+etcdctl --write-out="json" get key1 | jq
+```
+
+Another way of getting the `key` and `value` stored in the database:
+```sh
+etcdctl --write-out="json" get key1 | jq -r '.kvs[].key' | base64 -d -; echo ""
+etcdctl --write-out="json" get key1 | jq -r '.kvs[].value' | base64 -d -; echo ""
+```
+
+The output should be the key and value:
+```
+key1
+Hello World!
 ```
 
 ## Test with `cURL`
@@ -314,10 +330,16 @@ METRIC='http://192.168.13.36:2381'
 curl -L ${METRIC}/metrics
 ```
 
-`/health` endpoint also works:
+Check the `/health` endpoint for all your nodes:
 ```sh
-METRIC='http://192.168.13.36:2381'
-curl -L ${METRIC}/health
+ETCD_NODES=( k8setcd1 k8setcd2 k8setcd3 ); for NODE in "${ETCD_NODES[@]}"; do curl -L http://${NODE}:2381/health; echo ""; done
+```
+
+Output:
+```
+{"health":"true","reason":""}
+{"health":"true","reason":""}
+{"health":"true","reason":""}
 ```
 
 # Congratulation
@@ -329,6 +351,7 @@ You should have a three-node `etcd` cluster in **High Availibility** mode 🍾�
 [Configuration file for etcd server](https://github.com/etcd-io/etcd/blob/main/etcd.conf.yml.sample)  
 
 ---
+
 My goal is to incorporate this above tutorial with configuring an H.A. Kubernetes Cluster.
 
 # Options for Highly Available Topology

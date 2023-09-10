@@ -8,10 +8,9 @@
 #     Private key filename: <name>.key
 #
 # This is a bit dirty, but helps when you want to generate lots of certificate
-# for testing. Was made to work in conjunction with:
-# https://gist.github.com/ddella/c2bc100a091bc59f51b740a4f3663b75
+# for testing.
 #
-# HOWTO use it: ./gen_cert.sh server1 intermediate-ca
+# HOWTO use it: ./gen_cert.sh k8setcd1 172.31.11.10 etcd-ca
 #
 # This will generate the following files:
 #  -rw-r--r--   1 username  staff  1216 01 Jan 00:00 server.crt >> certificate
@@ -28,13 +27,14 @@ EXTRA_SAN=''
 
 if [[ $# -lt 3 || $# -gt 3 ]]
 then
-   printf "\nUsage: $0 <FQDN> <IP address> <name of CA or intermediate-CA>\n"
-   printf "Ex.: ./gen_cert.sh server1 172.31.11.10 ca\n\n"
+   printf "\nUsage: %s <filename prefix> <IP address> <filename prefix of CA>\n" $(basename $0)
+   printf "Ex.: %s k8setcd1 172.31.11.10 etcd-ca\n\n" $(basename $0)
    exit -1
 fi
 
 printf "\nMaking certificate: $1 ...\n"
 openssl ecparam -name prime256v1 -genkey -out $1.key
+# Comment the line above and uncomment the line below if you want an RSA key
 # openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out $1.key
 
 openssl req -new -sha256 -key $1.key -subj "/C=CA/ST=QC/L=Montreal/O=$1/OU=IT/CN=$1.$DOMAIN" \
@@ -45,9 +45,9 @@ openssl req -new -sha256 -key $1.key -subj "/C=CA/ST=QC/L=Montreal/O=$1/OU=IT/CN
 -addext "keyUsage = nonRepudiation, digitalSignature, keyEncipherment, keyAgreement, dataEncipherment" \
 -addext "authorityInfoAccess = caIssuers;URI:http://localhost:8000/Intermediate-CA.cer,OCSP;URI:http://localhost:8000/ocsp" \
 -addext "crlDistributionPoints = URI:http://localhost:8000/crl/Root-CA.crl,URI:http://localhost:8080/crl/Intermediate-CA.crl" \
--out $1-csr.pem
+-out $1.csr
 
-openssl x509 -req -sha256 -days 365 -in $1-csr.pem -CA $3.crt -CAkey $3.key -CAcreateserial \
+openssl x509 -req -sha256 -days 365 -in $1.csr -CA $3.crt -CAkey $3.key -CAcreateserial \
 -extfile - <<<"subjectAltName = DNS:localhost,DNS:*.localhost,DNS:$1,DNS:$1.$DOMAIN,IP:127.0.0.1,IP:$2$EXTRA_SAN
 basicConstraints = CA:FALSE
 extendedKeyUsage = clientAuth,serverAuth
@@ -58,11 +58,18 @@ authorityInfoAccess = caIssuers;URI:http://localhost:8000/Intermediate-CA.cer,OC
 crlDistributionPoints = URI:http://localhost:8000/crl/Root-CA.crl,URI:http://localhost:8000/crl/Intermediate-CA.crl" \
 -out $1.crt
 
-printf "\nPrinting Certificate...\n"
-# openssl req -noout -text -in $1-csr.pem
-openssl x509 -text -noout -in $1.crt
+# To verify that etcd node certificate $1.crt is the CA $3.crt:
+# openssl verify -no-CAfile -no-CApath -partial_chain -trusted %3.crt $1.crt
 
-printf "\nPrinting Digest of crt, key and csr. All values must be the same...\n"
-openssl pkey -in $1.key  -pubout | openssl dgst -sha256 -r | cut -d' ' -f1
-openssl x509 -in $1.crt -pubkey -noout | openssl dgst -sha256 -r | cut -d' ' -f1
-openssl req -in $1-csr.pem -pubkey -noout | openssl dgst -sha256 -r | cut -d' ' -f1
+# Verification of certificate and private key. The next 2 checksum must be identical!
+CRT_PUB=$(openssl x509 -pubkey -in $1.crt -noout | openssl sha256 | awk -F '= ' '{print $2}')
+KEY_PUB=$(openssl pkey -pubout -in $1.key | openssl sha256 | awk -F '= ' '{print $2}')
+
+if [[ "${CRT_PUB}" != "${KEY_PUB}" ]]
+then
+   printf "\nERROR: Public Key of certificate [%s] doesn't match Public Key of private key [%s].\n" $1.crt $1.key
+   exit -1
+else
+   printf "\nSUCCESS: Public Key of certificate [%s] matches Public Key of private key [%s].\n" $1.crt $1.key
+   exit 0
+fi
