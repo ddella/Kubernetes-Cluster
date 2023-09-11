@@ -1,17 +1,18 @@
 # Set up a High Availability etcd Cluster
 `etcd` is distributed, reliable key-value store for the most critical data of a distributed system. It's a strongly consistent, distributed key-value store that provides a reliable way to store data that needs to be accessed by a distributed system or cluster of machines. It gracefully handles leader elections during network partitions and can tolerate machine failure, even in the leader node.
 
-This tutorial is the instructions for installing `etcd` on a three-node cluster from pre-built binaries. This tutorial has nothing to do with Kubernetes. It could eventually be used when  installing an H.A Kubernetes Cluster with `External etcd` topology.
+This guide will cover the instructions for bootstrapping an `etcd` cluster on a three-node cluster from pre-built binaries. This tutorial has nothing to do with Kubernetes but it could eventually be used when installing an H.A Kubernetes Cluster with `External etcd` topology.
 
 # Before you begin
-We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.12
+We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.12-generic.
 
-- Three hosts that can talk to each other over TCP port `2380`.
+Prerequisites:
+- The three nodes that can communicate with each other on TCP port `2380`.
 - The clients of the `etcd` cluster can reach any of them on TCP port `2379`.
-  - TCP ports `2379` is the secure traffic for client requests
-  - TCP ports `2380` is the secure traffic for server-to-server communication
+  - TCP port `2379` is the traffic for client requests
+  - TCP port `2380` is the traffic for server-to-server communication
 - Each host must have `systemd` and a `bash` compatible shell installed.
-- Some infrastructure to copy files between hosts. For example `ssh` and `scp` can satisfy this requirement.
+- Some infrastructure to copy files between hosts. For example, `scp` can satisfy this requirement.
 
 # Setup an External ETCD Cluster
 In this tutorial we will configure a three-node TLS enabled `etcd` cluster that can act as an external datastore, like a Kubernetes H.A. Cluster 😉
@@ -48,6 +49,7 @@ etcdutl version
 ```
 
 ## Cleanup
+Remove the directory and files created in the above step:
 ```sh
 cd ..
 rm -rf etcd-${VER}-linux-amd64
@@ -56,7 +58,7 @@ unset VER
 ```
 
 # Generating and Distributing TLS Certificates
-We will use the `Openssl` tool to generate our own CA and all the `etcd` server certificates and keys.
+We will use the `openssl` tool to generate our own CA and all the `etcd` server certificates and keys. You can use your won certificate manager.
 
 ## Generate Private CA
 This script will generate a CA certificate with its private key. The argument is the prefix of both files created:
@@ -100,7 +102,7 @@ We need to to distribute these certificates and keys to each `etcd` node in the 
 ```
 
 # Move Certificate and Key
-SSH into each `etcd` node and run the below commands to move the certificate and key into the `/etc/etcd/pki` directory. I will be using `tmux` to run the commands on every node at the same time. Just paste the following in each node. The certificates and keys have the short hostname and the variable `ETCD_NAME` will be different on each node.
+SSH into each `etcd` node and run the below commands to move the certificate and key into the `/etc/etcd/pki` directory. I will be using `tmux` to run the commands on every node at the same time. Just paste the following in each node. The certificates and keys have the prefix of the short hostname. The variable `ETCD_NAME` will be different on each node.
 ```sh
 ETCD_NAME=$(hostname -s)
 sudo mkdir -p /etc/etcd/pki
@@ -112,7 +114,7 @@ sudo chmod 600 /etc/etcd/pki/${ETCD_NAME}.key
 We have generated and copied all the certificates/keys on each node. In the next step, we will create the configuration file and the `systemd` unit file for each node.
 
 # Create `etcd` configuration file
-This is the configuration file `/etc/etcd/etcd.conf` that needs to be copied on each node. The command can be pasted simultaneously on all the nodes. I will be using `tmux`:
+This is the configuration file `/etc/etcd/etcd.conf` that needs to be copied on each node. The command can be pasted simultaneously on all the nodes. I will be using `tmux` again:
 ```sh
 ETCD_CLUSTER_NAME=etcd-cluster-1
 ETCD_IP=$(hostname -i)
@@ -192,7 +194,7 @@ On every node, create the file `/etc/systemd/system/etcd.service` with the follo
 ```sh
 cat <<EOF | sudo tee /lib/systemd/system/etcd.service
 [Unit]
-Description=etcd key-value store service
+Description=etcd is a strongly consistent, distributed key-value store database
 Documentation=https://github.com/etcd-io/etcd
 After=network.target
  
@@ -346,6 +348,7 @@ Output:
 You should have a three-node `etcd` cluster in **High Availibility** mode 🍾🎉🥳
 
 # References
+[etcd main website](https://etcd.io/)  
 [Set up a High Availability etcd Cluster with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/setup-ha-etcd-with-kubeadm/)  
 [Options for Highly Available Topology](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/)  
 [Configuration file for etcd server](https://github.com/etcd-io/etcd/blob/main/etcd.conf.yml.sample)  
