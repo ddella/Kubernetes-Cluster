@@ -4,7 +4,7 @@
 This guide will cover the instructions for bootstrapping an `etcd` cluster on a three-node cluster from pre-built binaries. This tutorial has nothing to do with Kubernetes but it could eventually be used when installing an H.A Kubernetes Cluster with `External etcd` topology.
 
 # Before you begin
-We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.12-generic.
+We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.14-generic.
 
 Prerequisites:
 - The three nodes that can communicate with each other on TCP port `2380`.
@@ -19,9 +19,9 @@ In this tutorial we will configure a three-node TLS enabled `etcd` cluster that 
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|etcd|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.12|2G|2|
-|etcd|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.12|2G|2|
-|etcd|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.12|2G|2|
+|etcd|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
 
 ![ETCD Cluster](images/k8s-cluster.jpg)
 
