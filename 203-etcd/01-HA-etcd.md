@@ -233,8 +233,8 @@ export ETCDCTL_KEY=./k8setcd1.key
 ```
 
 > [!NOTE]  
-> `export ETCDCTL_API=3` is not needed anymore with version 3.4.x
-> You can use any client certificate/key. They are all signed by the same CA.
+> `export ETCDCTL_API=3` is not needed anymore with version 3.4.x  
+> You can use any client certificate/key. They are all signed by the same CA.  
 
 ## Check Cluster status
 To execute the next command, you can be on any host that:
