@@ -24,7 +24,7 @@ Let's get our hands dirty and learn about the installation and basic configurati
 
 This is a short guide on how to install `keepalived` package on Ubuntu 22.04:
 ```sh
-sudo apt update && sudo apt install keepalived
+sudo nala update && sudo nala install keepalived
 ```
 
 **DON'T DO THIS** but I couldn't help myself and I did it 😉 I downloaded the latest `.deb` package, extracted the binary file and copied it to `/usr/sbin/`. This should **NEVER BE DONE IN PRODUCTION** but the only dependencie not met is `libsnmp40`, so I decided to try it 😀

@@ -18,8 +18,7 @@ sudo apt install ./volian-archive*.deb
 ```
 
 # Ubuntu 22.04
-After the repository and key are installed simply run
-
+After the repository and key are installed simply run:
 ```sh
 sudo apt update && sudo apt install nala
 ```

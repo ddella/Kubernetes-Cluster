@@ -1,89 +1,5 @@
 <a name="readme-top"></a>
 
-# Prepare Ubuntu Server 22.04.2 for kubernetes
-This tutorial shows how to prepare a Ubuntu Server 22.04.2 to act as:
-
-- Nginx load balancer for Kubernetes API
-- Linux NFS server
-- Linux Jump Station to configure/monitor a Kubernetes cluster
-
->This is a real server that is not part of Kubernetes cluster. It has to be up before we create the cluster, expecially the API load balancer part.
-
-## Configurations
-|Role|FQDN|IP|OS|Kernel|RAM|vCPU|
-|----|----|----|----|----|----|----|
-|Load Balancer|k8sapi.isociel.com|192.168.13.60|Ubuntu 22.04.2|6.4.3|4G|4|
-
-# NFS Server
-## Definition of NFS
-Network File System (NFS), is a distributed file system that allows various clients to access a shared directory on a server.
-
-## Update Repos
-Update the Ubuntu repo with the following commands:
-```sh
-sudo apt update
-```
-
-## Install NFS Server
-Install NFS server:
-```sh
-sudo apt install nfs-kernel-server
-```
-
-## Configure NFS Server
-Create the mount point directory:
-```sh
-sudo mkdir /nfs-data
-```
-
-Change the permissions and ownership to match the following (Be sure that you know what you are doing):
-```sh
-sudo chown nobody:nogroup /nfs-data
-sudo chmod -R 777 /nfs-data/
-```
-
-Create the file exports for NFS server:
-```sh
-cat << EOF | sudo tee -a /etc/exports
-/nfs-data 192.168.13.0/24(rw,no_subtree_check,no_root_squash)
-EOF
-```
-
-Export it to the client(s):
-```sh
-sudo exportfs -arv
-```
-
->**Note:** Remember to re-export your shares on the server with `sudo exportfs -arv` if you make changes! The NFS server won’t pick them up automatically.  
-
-## Start NFS
-Start the service and make it persistant:
-```sh
-sudo systemctl start nfs-kernel-server.service
-sudo systemctl enable nfs-kernel-server.service
-```
-
-## Verification
-Check the status of NFS. Look for any kind of error/warning:
-```sh
-sudo systemctl status nfs-kernel-server.service
-```
-
-Verify the NFS version (you can see this information in column two):
-```sh
-rpcinfo -p | grep nfs
-```
-
- Display the currently running exports with:
- ```sh
- sudo exportfs -v
- ```
-
->**Note**:For every client, every K8s worker node, you will need to install the client portion of NFS. Failure to do so will make Pods incapable of mounting an NFS drive
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-------------------------------
 # Nginx as a load balancer
 This section is about configuring an Nginx reverse proxy/load balancer to front the Kubernetes API server. We are building a K8s cluster in high availability with at least three (3) master node. When a request arrives for Kubernetes API, Nginx becomes a proxy and further forward that request to any healthy K8s Master node, then it forwards the response back to the client.
 
@@ -91,7 +7,7 @@ This assumes that:
 - K8s API server runs on port 6443 with HTTPS
 - All K8s Master node runs the API via the URL: http://<master node>:6443
 
-Nginx will run on a bare metal Ubuntu server outside the K8s cluster.
+Nginx will run on a bare metal/virtual Ubuntu server outside the K8s cluster.
 
 ##  What is a Reverse Proxy
 Proxying is typically used to distribute the load among several servers, seamlessly show content from different websites, or pass requests for processing to application servers over protocols other than HTTP.
@@ -110,7 +26,7 @@ Of course I chooses the `Mainline` version to get all the latest features 😀
 
 Install the prerequisites:
 ```sh
-sudo apt install curl gnupg2 ca-certificates lsb-release debian-archive-keyring
+sudo nala install curl gnupg2 ca-certificates lsb-release debian-archive-keyring
 ```
 
 Import an official nginx signing key so `apt` could verify the packages authenticity. Fetch the key with the command:
@@ -144,8 +60,8 @@ echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 
 
 Update the repo and install NGINX:
 ```sh
-sudo apt update
-sudo apt install nginx
+sudo nala update
+sudo nala install nginx
 ```
 
 ## Checking Nginx
@@ -214,7 +130,7 @@ sudo systemctl status nginx
 ## Verify the load balancer
 On the server `k8sapi.isociel.com` check Nginx logs with the command:
 ```sh
-sudo tail -f /var/log/nginx/k8sapi.error.log 
+sudo tail -f /var/log/nginx/k8sapi.error.log
 ```
 
 When a client tries to connect, you should see this output. Since we don't have a K8s cluster yet, Nginx will try all the servers in the group and it will receive a `Connection refused`.
@@ -226,7 +142,7 @@ When a client tries to connect, you should see this output. Since we don't have 
 
 From another machine, try to connect to the K8s API loab balancer, with the command (no need for the `--insecure` flag):
 ```sh
-curl --max-time 10 https://k8sapi.isociel.com:6443
+curl --max-time 3 https://k8sapi.isociel.com:6443
 ```
 
 Output on the client:
@@ -243,10 +159,7 @@ Output on the client:
 >Both outputs are normal, since we don't have a K8s master node yet 😀
 
 # Conclusion
-You have a Ubuntu server that:
-- Acts as an NFS server for K8s volumes claim
-- Acts as a load balancer for all API requests to K8s (ex.: `kubectl` command)
-- Acts as a jump station to manage/monitor your K8s cluster
+You have a Ubuntu server that acts as a load balancer for all API requests to K8s (ex.: `kubectl` command).
 
 # References
 [Nginx Load Balancer](https://nginx.org/en/docs/http/load_balancing.html)  

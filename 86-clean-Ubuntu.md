@@ -44,9 +44,9 @@ sudo init 6
 
 Clean the old kernels with:
 ```sh
-sudo nala purge $(dpkg-query --show 'linux-image-*' | cut -f1 | grep -v "$(uname -r)")
-sudo nala purge $(dpkg-query --show 'linux-headers-*' | cut -f1 | grep -v "$(uname -r)")
-sudo nala purge $(dpkg-query --show 'linux-modules-*' | cut -f1 | grep -v "$(uname -r)")
+sudo nala purge $(dpkg-query --show 'linux-image-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-'))")
+sudo nala purge $(dpkg-query --show 'linux-headers-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-')")
+sudo nala purge $(dpkg-query --show 'linux-modules-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-')")
 ```
 
 ## Check Services

@@ -38,25 +38,22 @@ You need to install Tigera Calico custom resource definitions, but before, make 
 
 To retreive the `cidr` value you passed to `kubeadm init ...` when you bootstrapped you K8s cluster, type the command:
 ```sh
-kubectl cluster-info dump | grep -m 1 cluster-cidr | tr -d ' ,'
+CIDR=$(kubectl cluster-info dump | grep -m 1 cluster-cidr | tr -d ' ,"' | cut -d "=" -f 2)
+echo $CIDR
 ```
 
 You should see the following output (your milage may vary 😀). That's the value that you need to edit in the file `custom-resources.yaml`:
 ```
-"--cluster-cidr=10.224.0.0/16"
+100.64.0.0/10
 ```
 
-**Make sure you enter the exact same value. If you make a typo, Calico won't install.**
+Relace the default value `cidr: 192.168.0.0/16` for `cidr: 100.64.0.0/10` in the file `custom-resources.yaml`.
 
-File `custom-resources.yaml`
+```sh
+sed -i "s|^\([[:space:]]*\)cidr:.*$|\1cidr: $CIDR|" custom-resources.yaml
 ```
-[...]
-    ipPools:
-    - blockSize: 26
-      # cidr: 192.168.0.0/16
-      cidr: 10.224.0.0/16
-[...]
-```
+> [!WARNING]  
+> **Make sure you enter the exact same value. If you make a typo, Calico won't install.**
 
 Create the custom resource definitions:
 ```sh

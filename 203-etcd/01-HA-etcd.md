@@ -11,6 +11,7 @@ Prerequisites:
 - The clients of the `etcd` cluster can reach any of them on TCP port `2379`.
   - TCP port `2379` is the traffic for client requests
   - TCP port `2380` is the traffic for server-to-server communication
+  - TCP port `2381` is the traffic for the endpoints `/metrics` and `/health` (Optional)
 - Each host must have `systemd` and a `bash` compatible shell installed.
 - Some infrastructure to copy files between hosts. For example, `scp` can satisfy this requirement.
 
@@ -76,8 +77,10 @@ You could use the same client certificate of every `etcd` node and it will work 
 ./12-gen_cert.sh k8setcd1 192.168.13.35 etcd-ca
 ./12-gen_cert.sh k8setcd2 192.168.13.36 etcd-ca
 ./12-gen_cert.sh k8setcd3 192.168.13.37 etcd-ca
-rm -f *.csr
+./12-gen_cert.sh k8smaster1 192.168.13.61 etcd-ca ',DNS:k8smaster2,DNS:k8smaster3,DNS:k8smaster1.isociel.com,DNS:k8smaster2.isociel.com,DNS:k8smaster3.isociel.com,IP:192.168.13.62,IP:192.168.13.63'rm -f *.csr
 ```
+
+The last command is for our Kubernetes Control Plane nodes:
 
 This results in two files per `etcd` node. The `.crt` is the certificate and the `.key` is the private key:
 - k8setcd1.crt
@@ -86,6 +89,8 @@ This results in two files per `etcd` node. The `.crt` is the certificate and the
 - k8setcd2.key
 - k8setcd3.crt
 - k8setcd3.key
+- k8smaster1.crt
+- k8smaster1.key
 
 > [!IMPORTANT]  
 > The private keys are not encrypted as `etcd` needs a non-encrypted `pem` file.
@@ -133,7 +138,7 @@ listen-peer-urls: "https://${ETCD_IP}:2380"
 # List of comma separated URLs to listen on for client traffic.
 listen-client-urls: "https://${ETCD_IP}:2379,https://127.0.0.1:2379"
 
-# List of additional URLs to listen on that will respond to both the /metrics and /health endpoints
+# List of additional URLs to listen on, will respond to /metrics and /health endpoints
 listen-metrics-urls: "http://${ETCD_IP}:2381"
 
 # Initial cluster token for the etcd cluster during bootstrap.
@@ -234,7 +239,8 @@ export ETCDCTL_KEY=./k8setcd1.key
 
 > [!NOTE]  
 > `export ETCDCTL_API=3` is not needed anymore with version 3.4.x  
-> You can use any client certificate/key. They are all signed by the same CA.  
+> You can use any of the three client certificate/key with `ETCDCTL_CERT` and `ETCDCTL_KEY` because they are all signed by the same CA.  
+> You can generate another certificate/key pair for your bastion host, as long as the certificate is signed by the `etcd-ca`.  
 
 ## Check Cluster status
 To execute the next command, you can be on any host that:

@@ -25,12 +25,15 @@
 DOMAIN='isociel.com'
 EXTRA_SAN=''
 
-if [[ $# -lt 3 || $# -gt 3 ]]
+if [[ $# -lt 3 || $# -gt 4 ]]
 then
    printf "\nUsage: %s <filename prefix> <IP address> <filename prefix of CA>\n" $(basename $0)
    printf "Ex.: %s k8setcd1 172.31.11.10 etcd-ca\n\n" $(basename $0)
    exit -1
 fi
+
+# Undocumented argument 😉
+EXTRA_SAN=$4
 
 printf "\nMaking certificate: $1 ...\n"
 openssl ecparam -name prime256v1 -genkey -out $1.key

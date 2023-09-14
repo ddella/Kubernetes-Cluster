@@ -15,24 +15,24 @@ If you plan to bootstrap only one Control Plane for now, I strongly suggest that
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker1.isociel.com|192.168.13.65|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker2.isociel.com|192.168.13.66|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker3.isociel.com|192.168.13.67|Ubuntu 22.04.2|6.4.3|2G|2|
-|DNS Entry|k8sapi.isociel.com|192.168.13.61|N/A|N/A|N/A|N/A|
+|Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker1.isociel.com|192.168.13.65|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker2.isociel.com|192.168.13.66|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker3.isociel.com|192.168.13.67|Ubuntu 22.04.3|6.4.14|2G|2|
+|DNS Entry|k8sapi.isociel.com|192.168.13.70|N/A|N/A|N/A|N/A|
 
 ## Multiple Control Plane
 If you plan to bootstrap multiple control plane, you will need a load balancer that will be the `controlPlaneEndpoint`. Your load balancer can be Nginx, HAProxy or whatever you like. In this example, the `controlPlaneEndpoint` is `k8sapi.isociel.com` and is your load balancer.
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|Load Balancer|k8sapi.isociel.com|192.168.13.60|Ubuntu 22.04.2|6.4.3|2G|2|
-|Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.2|6.4.3|2G|2|
-|Master|k8smaster2.isociel.com|192.168.13.62|Ubuntu 22.04.2|6.4.3|2G|2|
-|Master|k8smaster3.isociel.com|192.168.13.63|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker1.isociel.com|192.168.13.65|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker2.isociel.com|192.168.13.66|Ubuntu 22.04.2|6.4.3|2G|2|
-|Worker|k8sworker3.isociel.com|192.168.13.67|Ubuntu 22.04.2|6.4.3|2G|2|
+|Load Balancer|k8sapi.isociel.com|192.168.13.70|Ubuntu 22.04.3|6.4.14|2G|2|
+|Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
+|Master|k8smaster2.isociel.com|192.168.13.62|Ubuntu 22.04.3|6.4.14|2G|2|
+|Master|k8smaster3.isociel.com|192.168.13.63|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker1.isociel.com|192.168.13.65|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker2.isociel.com|192.168.13.66|Ubuntu 22.04.3|6.4.14|2G|2|
+|Worker|k8sworker3.isociel.com|192.168.13.67|Ubuntu 22.04.3|6.4.14|2G|2|
 
 # Bootstrap `k8smaster1`
 We start by bootstrapping the first control plane.
@@ -48,7 +48,31 @@ For the IP addresses assigned to **Pods** and **Services**, I will be using the 
 
 >Note: Feel free to adjust the IP addresses above
 
-### **You need to be connected to `k8smaster1`.**
+### **You need to be connected to `k8smaster1`**
+
+******************************
+- Create the `/etc/kubernetes/pki/etcd` directory on the first master node.
+- Copy the `etcd` CA certificate and private key in the directory `/etc/kubernetes/pki/etcd`
+When the cluster is `bootstrapped`, `kubeadm` will not override the certificate and private key
+```sh
+# Command executes from bastion host used to bootstrapped the ETCD cluster
+ssh k8smaster1 'sudo mkdir -p /etc/kubernetes/pki/etcd'
+scp etcd-ca.crt daniel@k8smaster1:/$HOME/.
+ssh daniel@k8smaster1 'sudo mv etcd-ca.crt /etc/kubernetes/pki/etcd/.'
+```
+
+```
+/etc/kubernetes/pki
+├── apiserver-etcd-client.crt
+├── apiserver-etcd-client.key
+└── etcd
+    ├── etcd-ca.crt
+    ├── etcd-ca.key
+    ├── server-peer.crt
+    ├── server-peer.key
+```
+
+******************************
 
 Create a configuration file `kubeadm-k8smaster1-config.yaml` with the following content. Do not hesitate to modify it for your own environment:
 
@@ -74,6 +98,17 @@ apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
 clusterName: k8s-cluster1
 controlPlaneEndpoint: k8sapi.isociel.com:6443
+# The 'etcd' section is only if you have an external etcd cluster
+etcd:
+  external:
+    endpoints:
+      - https://192.168.13.35:2379 # change ETCD-IP appropriately
+      - https://192.168.13.36:2379 # change ETCD-IP appropriately
+      - https://192.168.13.37:2379 # change ETCD-IP appropriately
+    caFile: /etc/kubernetes/pki/etcd/etcd-ca.crt
+    certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+    keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+
 networking:
   dnsDomain: cluster.local
   podSubnet: 100.64.0.0/10
@@ -91,7 +126,7 @@ apiServer:
   - kubernetes.default
   - kubernetes.default.svc
   - kubernetes.default.svc.cluster.local
-  - 192.168.13.60
+  - 192.168.13.70
   - 192.168.13.61
   - 192.168.13.62
   - 192.168.13.63
@@ -227,7 +262,7 @@ kubectl get nodes -o=wide
 Output:
 ```
 NAME                     STATUS     ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION         CONTAINER-RUNTIME
-k8smaster1.isociel.com   NotReady   control-plane   50s   v1.27.4   192.168.13.61   <none>        Ubuntu 22.04.2 LTS   6.4.3-060403-generic   containerd://1.6.22
+k8smaster1.isociel.com   NotReady   control-plane   50s   v1.27.4   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060403-generic   containerd://1.6.22
 ```
 
 # Bootstrap another Control Plance
@@ -332,7 +367,7 @@ kubectl get nodes -o=wide
 Output will be different depending on what you have bootstrapped:
 ```
 NAME                     STATUS     ROLES           AGE    VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION         CONTAINER-RUNTIME
-k8smaster1.isociel.com   NotReady   control-plane   24m    v1.27.4   192.168.13.61   <none>        Ubuntu 22.04.2 LTS   6.4.3-060403-generic   containerd://1.6.22
+k8smaster1.isociel.com   NotReady   control-plane   24m    v1.27.4   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060403-generic   containerd://1.6.22
 ```
 
 >**Note**: The status of `NotReady` is normal since we don't have a CNI.

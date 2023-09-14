@@ -2,7 +2,7 @@
 #
 # This script copy the certificates and private keys to each etcd node.
 #
-# HOWTO use it: ./13-sco.sh
+# HOWTO use it: ./13-scp.sh
 #
 # Works with 'bash' and 'zsh' shell on macOS and Linux. Make sure you have OpenSSL *** in your PATH ***.
 #
