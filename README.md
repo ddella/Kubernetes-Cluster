@@ -284,7 +284,7 @@ EOF
 - Cluster IP: is the pool of IP's assign to service (managed by Kubernetes)
 - External IP: is the pool of IP's assign to external load balancer (NOT managed by Kubernetes)
 
-|Pods IP address|Cluster IP|External IP*|
+|Pods CIRD|Cluster IPs|External IPs*|
 |----|----|----|
 |100.64.0.0/10|198.18.0.0/16|198.19.0.0/16*|
 
@@ -383,11 +383,10 @@ kubeadm join k8sapi.isociel.com:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
 ```
 
 ## Start using the cluster
-It's not mandatory to administor the cluster from a master node. I would say it's better to use a jump station but I deciced to copy the admin `kubeconfig` file in my local home directory on the master node anyway 😇:
+It's not mandatory to administor the cluster from a master node. I would say it's better to use a bastion 😇. To copy the file `admin.conf` from a master node to your bastion host, execute the commands below (on the bastion host):
 ```sh
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+mkdir $HOME/.kube
+ssh k8smaster1 'sudo cat /etc/kubernetes/admin.conf' > $HOME/.kube/config
 ```
 
 ## Verification
