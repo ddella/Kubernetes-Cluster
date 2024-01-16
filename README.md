@@ -61,18 +61,18 @@ Three machines that meet kubeadm's minimum requirements for the worker nodes:
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|K8s Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Master|k8smaster2.isociel.com|192.168.13.62|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Master|k8smaster3.isociel.com|192.168.13.63|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Worker|k8sworker1.isociel.com|192.168.13.65|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Worker|k8sworker2.isociel.com|192.168.13.66|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Worker|k8sworker3.isociel.com|192.168.13.67|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s API VIP|k8sapi.isociel.com|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
-|Load Balancer|k8svrrp1.isociel.com|192.168.13.71|Ubuntu 22.04.3|6.4.14|2G|2|
-|Load Balancer|k8svrrp2.isociel.com|192.168.13.72|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Master|k8smaster1.kloud.lan|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Master|k8smaster2.kloud.lan|192.168.13.62|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Master|k8smaster3.kloud.lan|192.168.13.63|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Worker|k8sworker1.kloud.lan|192.168.13.65|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Worker|k8sworker2.kloud.lan|192.168.13.66|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Worker|k8sworker3.kloud.lan|192.168.13.67|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd1.kloud.lan|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd2.kloud.lan|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd3.kloud.lan|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s API VIP|k8sapi.kloud.lan|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
+|Load Balancer|k8svrrp1.kloud.lan|192.168.13.71|Ubuntu 22.04.3|6.4.14|2G|2|
+|Load Balancer|k8svrrp2.kloud.lan|192.168.13.72|Ubuntu 22.04.3|6.4.14|2G|2|
 
 Each master node, in a multi-master environment, runs its own copy of
 - Kube API server
@@ -93,9 +93,9 @@ We will use our own private CA. Each cluster member will have a single unique ce
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|etcd datastore|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd1.kloud.lan|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd2.kloud.lan|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd3.kloud.lan|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
 
 [Follow this page to build the etcd cluster](203-etcd/01-HA-etcd.md)  
 
@@ -129,9 +129,9 @@ Before you begin, you need:
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|K8s API VIP|k8sapi.isociel.com|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
-|Load Balancer|k8svrrp1.isociel.com|192.168.13.71|Ubuntu 22.04.3|6.4.14|2G|2|
-|Load Balancer|k8svrrp2.isociel.com|192.168.13.72|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s API VIP|k8sapi.kloud.lan|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
+|Load Balancer|k8svrrp1.kloud.lan|192.168.13.71|Ubuntu 22.04.3|6.4.14|2G|2|
+|Load Balancer|k8svrrp2.kloud.lan|192.168.13.72|Ubuntu 22.04.3|6.4.14|2G|2|
 
 [Follow this page to build an Nginx server that will act as a load balancer](./03-k8s-API-LB4.md)
 
@@ -155,17 +155,17 @@ See [kubeadm Configuration (v1beta3)](https://kubernetes.io/docs/reference/confi
 
 ## Multiple Control Plane
 > [!IMPORTANT]  
-> In case of multiple control plane, you will need a VIP that will be the `controlPlaneEndpoint`. In this example, the `controlPlaneEndpoint` is `k8sapi.isociel.com` which is the load balancer cluster.
+> In case of multiple control plane, you will need a VIP that will be the `controlPlaneEndpoint`. In this example, the `controlPlaneEndpoint` is `k8sapi.kloud.lan` which is the load balancer cluster.
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|K8s API VIP|k8sapi.isociel.com|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
-|K8s Master|k8smaster1.isociel.com|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Master|k8smaster2.isociel.com|192.168.13.62|Ubuntu 22.04.3|6.4.14|2G|2|
-|K8s Master|k8smaster3.isociel.com|192.168.13.63|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd datastore|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s API VIP|k8sapi.kloud.lan|192.168.13.70|This is a VIP for API|N/A|N/A|N/A|
+|K8s Master|k8smaster1.kloud.lan|192.168.13.61|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Master|k8smaster2.kloud.lan|192.168.13.62|Ubuntu 22.04.3|6.4.14|2G|2|
+|K8s Master|k8smaster3.kloud.lan|192.168.13.63|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd1.kloud.lan|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd2.kloud.lan|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd datastore|k8setcd3.kloud.lan|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
 
 ## `etcd` TLS Certificates
 When we created the `etcd` cluster we created a CA for `etcd` and some client certificates. In my case the files are on my bastion host. I also created a certificate/key for Kubernetes Control Plane.
@@ -237,7 +237,7 @@ mode: ipvs
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
 clusterName: k8s-cluster1
-controlPlaneEndpoint: k8sapi.isociel.com:6443
+controlPlaneEndpoint: k8sapi.kloud.lan:6443
 # The 'etcd' section is only if you have an external etcd cluster
 etcd:
   external:
@@ -250,6 +250,7 @@ etcd:
     keyFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.key
 
 networking:
+  # Change me for something else than '.local'
   dnsDomain: cluster.local
   podSubnet: 100.64.0.0/10
   serviceSubnet: 198.18.0.0/16
@@ -258,10 +259,10 @@ apiServer:
   - k8smaster1
   - k8smaster2
   - k8smaster3
-  - k8sapi.isociel.com
-  - k8smaster1.isociel.com
-  - k8smaster2.isociel.com
-  - k8smaster3.isociel.com
+  - k8sapi.kloud.lan
+  - k8smaster1.kloud.lan
+  - k8smaster2.kloud.lan
+  - k8smaster3.kloud.lan
   - kubernetes
   - kubernetes.default
   - kubernetes.default.svc
@@ -308,7 +309,7 @@ W0913 14:13:21.632283    3021 checks.go:835] detected that the sandbox image "re
 [certs] Using certificateDir folder "/etc/kubernetes/pki"
 [certs] Generating "ca" certificate and key
 [certs] Generating "apiserver" certificate and key
-[certs] apiserver serving cert is signed for DNS names [k8sapi.isociel.com k8smaster1 k8smaster1.isociel.com k8smaster2 k8smaster2.isociel.com k8smaster3 k8smaster3.isociel.com kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [198.18.0.1 192.168.13.61 192.168.13.70 192.168.13.62 192.168.13.63]
+[certs] apiserver serving cert is signed for DNS names [k8sapi.kloud.lan k8smaster1 k8smaster1.kloud.lan k8smaster2 k8smaster2.kloud.lan k8smaster3 k8smaster3.kloud.lan kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [198.18.0.1 192.168.13.61 192.168.13.70 192.168.13.62 192.168.13.63]
 [certs] Generating "apiserver-kubelet-client" certificate and key
 [certs] Generating "front-proxy-ca" certificate and key
 [certs] Generating "front-proxy-client" certificate and key
@@ -337,8 +338,8 @@ W0913 14:13:21.632283    3021 checks.go:835] detected that the sandbox image "re
 [upload-certs] Storing the certificates in Secret "kubeadm-certs" in the "kube-system" Namespace
 [upload-certs] Using certificate key:
 f9ea00c50ef12a386949dfb84b3abb2aa1053cc84f3792cd4b8aa6cc42c1fd57
-[mark-control-plane] Marking the node k8smaster1.isociel.com as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
-[mark-control-plane] Marking the node k8smaster1.isociel.com as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
+[mark-control-plane] Marking the node k8smaster1.kloud.lan as control-plane by adding the labels: [node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
+[mark-control-plane] Marking the node k8smaster1.kloud.lan as control-plane by adding the taints [node-role.kubernetes.io/control-plane:NoSchedule]
 [bootstrap-token] Using token: 38tjlt.ibkwbtflmj6w8qmg
 [bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
 [bootstrap-token] Configured RBAC rules to allow Node Bootstrap tokens to get nodes
@@ -368,7 +369,7 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 You can now join any number of the control-plane node running the following command on each as root:
 
-  kubeadm join k8sapi.isociel.com:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
+  kubeadm join k8sapi.kloud.lan:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
 	--discovery-token-ca-cert-hash sha256:8817bb69522a72618241f20adfede139743f48403367cec3f4144b43f918b97d \
 	--control-plane --certificate-key f9ea00c50ef12a386949dfb84b3abb2aa1053cc84f3792cd4b8aa6cc42c1fd57
 
@@ -378,7 +379,7 @@ As a safeguard, uploaded-certs will be deleted in two hours; If necessary, you c
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join k8sapi.isociel.com:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
+kubeadm join k8sapi.kloud.lan:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
 	--discovery-token-ca-cert-hash sha256:8817bb69522a72618241f20adfede139743f48403367cec3f4144b43f918b97d 
 ```
 
@@ -398,7 +399,7 @@ kubectl get nodes -o=wide
 Output:
 ```
 NAME                     STATUS     ROLES           AGE    VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION          CONTAINER-RUNTIME
-k8smaster1.isociel.com   NotReady   control-plane   5m5s   v1.28.1   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8smaster1.kloud.lan   NotReady   control-plane   5m5s   v1.28.1   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
 ```
 
 # Bootstrap another Control Plance
@@ -408,7 +409,7 @@ If you plan to bootstrap another Control Plane, follow the steps below for each 
 Now lets bootstarp `k8smaster2` within 2 hours of bootstraping `k8smaster1` since the *certificate-key* is ony valid for 2 hours. We use the command from the output of the `kubeadm init` we did in the preceeding step.
 
 ```sh
-sudo kubeadm join k8sapi.isociel.com:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
+sudo kubeadm join k8sapi.kloud.lan:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
 --discovery-token-ca-cert-hash sha256:8817bb69522a72618241f20adfede139743f48403367cec3f4144b43f918b97d \
 --control-plane --certificate-key f9ea00c50ef12a386949dfb84b3abb2aa1053cc84f3792cd4b8aa6cc42c1fd57
 ```
@@ -419,16 +420,16 @@ For every worker node you want to join, follow the steps below within 24 hours, 
 ### **You need to be connected to the worker node.**
 You can join any number of `worker` nodes by running the following command, **on each**, as root:
 ```sh
-sudo kubeadm join k8sapi.isociel.com:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
+sudo kubeadm join k8sapi.kloud.lan:6443 --token 38tjlt.ibkwbtflmj6w8qmg \
 --discovery-token-ca-cert-hash sha256:8817bb69522a72618241f20adfede139743f48403367cec3f4144b43f918b97d
 ```
 
 ## Add node role
 I like to have a `ROLES` with `worker`, so I add a node role for each worker node with the command:
 ```sh
-kubectl label node k8sworker1.isociel.com node-role.kubernetes.io/worker=myworker
-kubectl label node k8sworker2.isociel.com node-role.kubernetes.io/worker=myworker
-kubectl label node k8sworker3.isociel.com node-role.kubernetes.io/worker=myworker
+kubectl label node k8sworker1.kloud.lan node-role.kubernetes.io/worker=myworker
+kubectl label node k8sworker2.kloud.lan node-role.kubernetes.io/worker=myworker
+kubectl label node k8sworker3.kloud.lan node-role.kubernetes.io/worker=myworker
 ```
 
 ## Verification
@@ -449,21 +450,21 @@ kubectl get pods -A
 
 Output with three Control Plane:
 ```
-NAMESPACE     NAME                                             READY   STATUS    RESTARTS   AGE
-kube-system   coredns-5dd5756b68-lp5xr                         0/1     Pending   0          17m
-kube-system   coredns-5dd5756b68-tqstw                         0/1     Pending   0          17m
-kube-system   kube-apiserver-k8smaster1.isociel.com            1/1     Running   0          17m
-kube-system   kube-apiserver-k8smaster2.isociel.com            1/1     Running   0          9m25s
-kube-system   kube-apiserver-k8smaster3.isociel.com            1/1     Running   0          8m26s
-kube-system   kube-controller-manager-k8smaster1.isociel.com   1/1     Running   0          17m
-kube-system   kube-controller-manager-k8smaster2.isociel.com   1/1     Running   0          9m24s
-kube-system   kube-controller-manager-k8smaster3.isociel.com   1/1     Running   0          8m26s
-kube-system   kube-proxy-42gql                                 1/1     Running   0          9m27s
-kube-system   kube-proxy-8hm9s                                 1/1     Running   0          8m29s
-kube-system   kube-proxy-pmsck                                 1/1     Running   0          17m
-kube-system   kube-scheduler-k8smaster1.isociel.com            1/1     Running   0          17m
-kube-system   kube-scheduler-k8smaster2.isociel.com            1/1     Running   0          9m24s
-kube-system   kube-scheduler-k8smaster3.isociel.com            1/1     Running   0          8m26s
+NAMESPACE     NAME                                              READY   STATUS    RESTARTS   AGE
+kube-system   coredns-5dd5756b68-lp5xr                          0/1     Pending   0          17m
+kube-system   coredns-5dd5756b68-tqstw                          0/1     Pending   0          17m
+kube-system   kube-apiserver-k8smaster1.kloud.lan               1/1     Running   0          17m
+kube-system   kube-apiserver-k8smaster2.kloud.lan               1/1     Running   0          9m25s
+kube-system   kube-apiserver-k8smaster3.kloud.lan               1/1     Running   0          8m26s
+kube-system   kube-controller-manager-k8smaster1.kloud.lan      1/1     Running   0          17m
+kube-system   kube-controller-manager-k8smaster2.kloud.lan      1/1     Running   0          9m24s
+kube-system   kube-controller-manager-k8smaster3.kloud.lan      1/1     Running   0          8m26s
+kube-system   kube-proxy-42gql                                  1/1     Running   0          9m27s
+kube-system   kube-proxy-8hm9s                                  1/1     Running   0          8m29s
+kube-system   kube-proxy-pmsck                                  1/1     Running   0          17m
+kube-system   kube-scheduler-k8smaster1.kloud.lan               1/1     Running   0          17m
+kube-system   kube-scheduler-k8smaster2.kloud.lan               1/1     Running   0          9m24s
+kube-system   kube-scheduler-k8smaster3.kloud.lan               1/1     Running   0          8m26s
 ```
 
 # IPVS
@@ -497,34 +498,34 @@ Follow theses steps to install Calico [here](./202-Cilium/01-0-Install-Cilium.md
 After installing any CNI, your cluster should look like this:
 ```
 NAME                     STATUS   ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION          CONTAINER-RUNTIME
-k8smaster1.isociel.com   Ready    control-plane   84m   v1.28.1   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
-k8smaster2.isociel.com   Ready    control-plane   76m   v1.28.1   192.168.13.62   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
-k8smaster3.isociel.com   Ready    control-plane   75m   v1.28.1   192.168.13.63   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
-k8sworker1.isociel.com   Ready    worker          63m   v1.28.1   192.168.13.65   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
-k8sworker2.isociel.com   Ready    worker          41m   v1.28.1   192.168.13.66   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8smaster1.kloud.lan   Ready    control-plane   84m   v1.28.1   192.168.13.61   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8smaster2.kloud.lan   Ready    control-plane   76m   v1.28.1   192.168.13.62   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8smaster3.kloud.lan   Ready    control-plane   75m   v1.28.1   192.168.13.63   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8sworker1.kloud.lan   Ready    worker          63m   v1.28.1   192.168.13.65   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
+k8sworker2.kloud.lan   Ready    worker          41m   v1.28.1   192.168.13.66   <none>        Ubuntu 22.04.3 LTS   6.4.14-060414-generic   containerd://1.7.5
 ```
 
 # `etcd` Pods
 Verify that there's no more `kube-etcd-xxxx` Pods since the `etcd` cluster is external from the Kubernetes Cluster:
 ```
 kubectl get pods -n kube-system
-NAME                                             READY   STATUS    RESTARTS   AGE
-coredns-5dd5756b68-lp5xr                         1/1     Running   0          99m
-coredns-5dd5756b68-tqstw                         1/1     Running   0          99m
-kube-apiserver-k8smaster1.isociel.com            1/1     Running   0          99m
-kube-apiserver-k8smaster2.isociel.com            1/1     Running   0          91m
-kube-apiserver-k8smaster3.isociel.com            1/1     Running   0          90m
-kube-controller-manager-k8smaster1.isociel.com   1/1     Running   0          99m
-kube-controller-manager-k8smaster2.isociel.com   1/1     Running   0          91m
-kube-controller-manager-k8smaster3.isociel.com   1/1     Running   0          90m
-kube-proxy-42gql                                 1/1     Running   0          91m
-kube-proxy-82scj                                 1/1     Running   0          56m
-kube-proxy-8hm9s                                 1/1     Running   0          90m
-kube-proxy-dznx6                                 1/1     Running   0          78m
-kube-proxy-pmsck                                 1/1     Running   0          99m
-kube-scheduler-k8smaster1.isociel.com            1/1     Running   0          99m
-kube-scheduler-k8smaster2.isociel.com            1/1     Running   0          91m
-kube-scheduler-k8smaster3.isociel.com            1/1     Running   0          90m
+NAME                                              READY   STATUS    RESTARTS   AGE
+coredns-5dd5756b68-lp5xr                          1/1     Running   0          99m
+coredns-5dd5756b68-tqstw                          1/1     Running   0          99m
+kube-apiserver-k8smaster1.kloud.lan               1/1     Running   0          99m
+kube-apiserver-k8smaster2.kloud.lan               1/1     Running   0          91m
+kube-apiserver-k8smaster3.kloud.lan               1/1     Running   0          90m
+kube-controller-manager-k8smaster1.kloud.lan      1/1     Running   0          99m
+kube-controller-manager-k8smaster2.kloud.lan      1/1     Running   0          91m
+kube-controller-manager-k8smaster3.kloud.lan      1/1     Running   0          90m
+kube-proxy-42gql                                  1/1     Running   0          91m
+kube-proxy-82scj                                  1/1     Running   0          56m
+kube-proxy-8hm9s                                  1/1     Running   0          90m
+kube-proxy-dznx6                                  1/1     Running   0          78m
+kube-proxy-pmsck                                  1/1     Running   0          99m
+kube-scheduler-k8smaster1.kloud.lan               1/1     Running   0          99m
+kube-scheduler-k8smaster2.kloud.lan               1/1     Running   0          91m
+kube-scheduler-k8smaster3.kloud.lan               1/1     Running   0          90m
 ```
 
 # References
