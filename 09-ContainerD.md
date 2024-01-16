@@ -13,7 +13,7 @@ Steps to install `containerd` and it's dependencies on Ubuntu 22.04:
 - Step 3 : Install `runc`
 - Step 4 : Install `CNI` plugins
 
-# Step 1: Remove old `containerd`
+# Step 0: Remove old `containerd`
 Remove old `containerd`
 ```sh
 sudo nala remove containerd.io
@@ -30,6 +30,7 @@ echo ${VER}
 curl -LO https://github.com/containerd/containerd/releases/download/v${VER}/containerd-${VER}-linux-amd64.tar.gz
 # Extract binary package to '/usr/local/bin' with the command:
 sudo tar Cxzvf /usr/local containerd-${VER}-linux-amd64.tar.gz
+rm -f containerd-${VER}-linux-amd64.tar.gz
 ```
 
 Prepare `containerd` configuration file for Kubernetes:
@@ -83,7 +84,7 @@ W0714 13:38:17.059546   33985 checks.go:835] detected that the sandbox image "re
 
 To fix this, change the `pause` container version in the file `/etc/containerd/config.toml`:
 ```sh
-sudo sed -i 's/sandbox_image \= \"registry.k8s.io\/pause:3.6\"/sandbox_image \= \"registry.k8s.io\/pause:3.9\"/' /etc/containerd/config.toml
+sudo sed -i 's/sandbox_image \= \"registry.k8s.io\/pause:3.8\"/sandbox_image \= \"registry.k8s.io\/pause:3.9\"/' /etc/containerd/config.toml
 ```
 
 Restart the service and check it's status:
@@ -124,3 +125,58 @@ rm -f cni-plugins-linux-amd64-${VER}.tgz
 [GitHub - Containerd Latest Release](https://github.com/containerd/containerd/releases)  
 [](https://github.com/containernetworking/plugins)  
 [Docker](https://download.docker.com/linux/ubuntu/dists/)  
+
+---
+
+# Upgrade
+## Step 1: Install `containerd`
+Get the latest version of `containerd`:
+```sh
+# Get latest release
+VER=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | grep tag_name | cut -d '"' -f 4|sed 's/v//g')
+echo ${VER}
+# Download and extract the archive file from Github release page
+curl -LO https://github.com/containerd/containerd/releases/download/v${VER}/containerd-${VER}-linux-amd64.tar.gz
+# Extract binary package to '/usr/local/bin' with the command:
+sudo tar Cxzvf /usr/local containerd-${VER}-linux-amd64.tar.gz
+rm -f containerd-${VER}-linux-amd64.tar.gz
+```
+
+Prepare `containerd` configuration file for Kubernetes:
+```sh
+sudo mv /etc/containerd/config.toml /etc/containerd/config.toml.old
+sudo containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+```
+
+Edit the configuration file `/etc/containerd/config.toml`. In the section `[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]`, change the key `SystemdCgroup` to true. You can use the following command or your prefered text editor:
+```sh
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+```
+
+### Fix issue with `pause` container
+Check that the `pause` image as a version of 3.8+. If it does, skip to next step.
+```sh
+sudo grep "sandbox_image =" /etc/containerd/config.toml
+```
+
+Output:
+```
+    sandbox_image = "registry.k8s.io/pause:3.8"
+```
+
+I had this warning message below when doing `kubeadm init`:
+```
+W0714 13:38:17.059546   33985 checks.go:835] detected that the sandbox image "registry.k8s.io/pause:3.6" of the container runtime is inconsistent with that used by kubeadm. It is recommended that using "registry.k8s.io/pause:3.9" as the CRI sandbox image.
+```
+
+To fix this, change the `pause` container version in the file `/etc/containerd/config.toml`:
+```sh
+sudo sed -i 's/sandbox_image \= \"registry.k8s.io\/pause:3.8\"/sandbox_image \= \"registry.k8s.io\/pause:3.9\"/' /etc/containerd/config.toml
+```
+
+Restart the service and check it's status:
+```sh
+sudo systemctl restart containerd
+sudo systemctl status containerd
+```
+

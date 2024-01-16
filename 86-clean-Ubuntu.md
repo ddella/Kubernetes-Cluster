@@ -44,7 +44,8 @@ sudo init 6
 
 Clean the old kernels with:
 ```sh
-sudo nala purge $(dpkg-query --show 'linux-image-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-'))")
+# sudo nala purge $(dpkg-query --show 'linux-image-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-'))")
+sudo nala purge $(dpkg-query --show 'linux-image-*' | cut -f1 | grep -v "$(uname -r)")
 sudo nala purge $(dpkg-query --show 'linux-headers-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-')")
 sudo nala purge $(dpkg-query --show 'linux-modules-*' | cut -f1 | grep -v "$(uname -r | cut -f1 -d '-')")
 ```
@@ -56,6 +57,9 @@ service --status-all
 ```
 
 # Remove Cloud-Init from Ubuntu 22.04 LTS
+You can use either step 1 or step 2 bit **NOT** both. I used step 1 😀
+
+## Step 1: Completly remove Cloud init
 Those are the commands to completly remove Cloud init.
 
 I generally removed Cloud Init because it started to give me some warning at boot time and I don’t use it with a Kubernetes Cluster.
@@ -71,12 +75,11 @@ sudo rm -rf /var/lib/cloud/
 sudo init 6
 ```
 
-## Disable Service
-Disabling the service is the easiest and safest way if you’re considering using it in the future.
+## Step 2: Disable Cloud init Service
+Disabling the service is the easiest and safest way if you're considering using it in the future.
 
 ```sh
 sudo touch /etc/cloud/cloud-init.disabled
-sudo init 6
 ```
 
 # Remove Snap
@@ -106,6 +109,22 @@ sudo vim /etc/apt/apt.conf.d/50unattended-upgrades
 ```sh
 sudo nala autoremove --purge
 sudo apt-get autoclean
+```
+
+# Remove Plymouth
+```sh
+sudo apt purge --auto-remove plymouth
+# sudo systemctl disable plymouth.service
+sudo systemctl mask plymouth.service
+sudo systemctl daemon-reload
+```
+
+# Remove ufw
+You can remove `ufw`. It will not affect your iptables configuration. UFW (Uncomplicated Firewall) was simply developed to ease some configurations done with iptables.
+
+To purge it, in cases where it's wasting space, you can type the following:
+```sh
+sudo apt purge --auto-remove ufw
 ```
 
 # References

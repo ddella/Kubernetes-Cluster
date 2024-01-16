@@ -1,4 +1,18 @@
 # What is Nala
+
+**UPDATED**
+Nala is officially in the testing and sid repos.
+
+Ubuntu 22.04
+```sh
+sudo apt install nala
+```
+
+No need to do the rest
+
+https://gitlab.com/volian/nala/-/wikis/Installation
+
+---
 Nala is a front-end for libapt-pkg. Specifically we interface using the python-apt api.
 
 Especially for newer users it can be hard to understand what apt is trying to do when installing or upgrading.
@@ -31,10 +45,15 @@ sudo nala update
 # Update
 ```sh
 nala list --upgradable
+sudo nala upgrade
 ```
 
 # Cleanup
 Delete packages:
 ```sh
 rm -f volian-archive*.deb
+sudo apt autoremove
 ```
+
+# References
+[Installation instruction](https://gitlab.com/volian/nala/-/wikis/Installation)  

@@ -98,6 +98,6 @@ NAME        TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
 nginx-svc   LoadBalancer   198.19.62.222   <pending>     80:30531/TCP   17s
 ```
 
->You can only reach the `CLUSTER-IP` from a node within the cluster or you can use any other server but it needs to have a static IP address to reach that IP address. We'll see later how to enable BGP to advertise that IP to a `TOR` router.
+>You can only reach the `CLUSTER-IP` from a node within the cluster or you can use any other server but it needs to have a static IP address to reach that IP address. We'll see later how to enable BGP to advertise that IP to a `Top of Rack (tor)` router.
 
 You can check [this](08-BGP.md) tutorial on how to active BGP with Cilium. Leave everything you've done here running.

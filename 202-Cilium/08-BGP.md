@@ -35,7 +35,7 @@ spec:
   # to advertise the CIDR block of Pods
     exportPodCIDR: true
     neighbors:
-     - peerAddress: '192.168.13.40/24'
+     - peerAddress: '192.168.13.40/32'
        peerASN: 65000
       #  eBGPMultihopTTL: 10
       #  connectRetryTimeSeconds: 120

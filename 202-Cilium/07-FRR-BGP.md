@@ -50,7 +50,7 @@ sudo systemctl status frr
 # Enjoy
 Let's do a very basic BGP configuration. You can start a `Cisco like` shell with the command:
 ```sh
-sudo vtysh 
+sudo vtysh
 ```
 
 ### Simple BGP configuration
@@ -73,6 +73,9 @@ exit
 ip prefix-list INPUTALL seq 5 permit any
 ip prefix-list OUTPUTALL seq 5 permit any
 ```
+
+> [!WARNING]  
+> Both prefix-list `INPUTALL` and `OUTPUTALL` are required or not routes will be received and advertised. You can configure `no bgp ebgp-requires-policy` to skip the configuration of policies.
 
 # Config file
 Your configuration is in file `/etc/frr/frr.conf`:

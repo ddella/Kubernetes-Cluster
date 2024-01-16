@@ -23,8 +23,7 @@ tar xvf helm-v${VER}-linux-amd64.tar.gz
 
 ## 3. Move Helm binary package to `/usr/local/bin` directory with the command
 ```sh
-sudo mv linux-amd64/helm /usr/local/bin/.
-sudo chown root:adm /usr/local/bin/helm
+sudo install -g adm -o root linux-amd64/helm /usr/local/bin/
 ```
 
 ## 4. Cleanup

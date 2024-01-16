@@ -130,7 +130,7 @@ apiServer:
   - 192.168.13.61
   - 192.168.13.62
   - 192.168.13.63
-  timeoutForControlPlane: 4m0s
+  timeoutForControlPlane: 2m0s
 certificatesDir: /etc/kubernetes/pki
 controllerManager:
   extraArgs:
@@ -251,6 +251,12 @@ It's not mandatory to administor the cluster from a master node. I would say it'
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+> [!NOTE]  
+> If you use a bastion host, you can copy the `admin.conf` file from a master node to your bastion host with the command:
+```sh
+rsync --mkpath --rsync-path="sudo rsync" daniel@k8s1master1:/etc/kubernetes/admin.conf $HOME/.kube/config
 ```
 
 ## Verification

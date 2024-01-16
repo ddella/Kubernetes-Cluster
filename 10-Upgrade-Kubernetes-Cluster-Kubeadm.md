@@ -1,15 +1,15 @@
 # Upgrade Kubernetes Cluster Using Kubeadm
-In this example, I will be upgrading Kubernetes version 1.27.4 to 1.28.0.
+In this example, I will be upgrading Kubernetes version `1.28.1` to `1.28.2`.
 
 We need to run the upgrades in the following order:
 
 1. Control plane node(s)
 2. Worker Nodes
 
-Also, we need to upgrade the following components on both the control plane(s) and the worker nodes.
+Also, we need to upgrade the following components on the control plane(s), the worker nodes and every `bastion` hosts you use to manage your K8s cluster.
 
 - Kubeadm
-- Kubelet
+- Kubelet (not needed on bastion host)
 - Kubectl
 
 # Before
@@ -34,8 +34,10 @@ Following are the high level steps to upgrade the control plane(s):
 Lets get started with the Upgrade.
 
 # Step 1: Check the existing Kubeadm version
-Login to the control plane and can check the existing version using the following command. If you have more than one control plane, pick one 😉
+> [!IMPORTANT]  
+> You **NEED** to be on a control plane. If you have more than one control plane, just pick one 😉
 
+Login to the control plane and check the existing version using the following command.
 ```sh
 kubeadm version -o yaml
 ```
@@ -47,20 +49,20 @@ sudo apt update
 sudo apt-cache madison kubeadm | head -5
 ```
 
-Also you can run a `kubeadm upgrde plan` to get upgrade suggestions.
+Also you can run a `kubeadm upgrade plan` to get upgrade suggestions.
 ```sh
 sudo kubeadm upgrade plan --ignore-preflight-errors 'all'
 ```
 
-My current version is 1.27.4 and I will be upgrading to version 1.28.0.
+My current version is 1.28.1 and I will be upgrading to version 1.28.2.
 
 # Step 3: unhold kubeadm and Install the required version
 During the `kubeadm` installation, I have hold `kubeadm`, `kubectl` and `kubelet` to prevent unplanned upgrades.
 
-We need to unhold `kubeadm`, install v1.28.0-00 and hold it again, using the following command.
+We need to unhold `kubeadm`, install `v1.28.2-00` and hold it again, using the following command.
 ```sh
 sudo apt-mark unhold kubeadm
-sudo apt install -y kubeadm=1.28.0-00
+sudo apt install -y kubeadm=1.28.2-00
 sudo apt-mark hold kubeadm
 ```
 
@@ -71,8 +73,12 @@ sudo apt-mark hold kubeadm
 
 The upgrade procedure on control plane nodes should be executed one node at a time. Pick a control plane node that you wish to upgrade first. It must have the `/etc/kubernetes/admin.conf` file.
 ```sh
-sudo kubeadm upgrade apply v1.28.0
+sudo kubeadm upgrade apply v1.28.2
 ```
+
+> [!NOTE]  
+> I usually get this kind of error the first time I issue the command.
+> `[ERROR ImagePull]: failed to pull image registry.k8s.io/kube-apiserver:v1.28.x`. I just do it again.
 
 # Step 5: Upgrading other control plane node(s)
 You do this step only if you have already upgraded one control plane node using the command in **Step 4**.
@@ -92,7 +98,7 @@ kubectl drain <node-to-drain> --ignore-daemonsets
 Upgrade `kubelet` and `kubectl`:
 ```sh
 sudo apt-mark unhold kubelet kubectl
-sudo apt update && sudo apt install -y kubelet=1.28.0-00 kubectl=1.28.0-00
+sudo apt update && sudo apt install -y kubelet=1.28.2-00 kubectl=1.28.2-00
 sudo apt-mark hold kubelet kubectl
 ```
 
@@ -115,7 +121,7 @@ kubectl uncordon <node-to-uncordon>
 After the `kubelet` is upgraded on all control plane nodes verify that all nodes are available again by running the following command from anywhere `kubectl` can access the cluster:
 
 ```sh
-kubectl get nodes
+kubectl get nodes -o wide
 ```
 
 > **Note**
@@ -139,7 +145,7 @@ During the `kubeadm` installation, I have hold `kubeadm` to prevent upgrades.
 We need to unhold `kubeadm`, install v1.28.0-00 and hold it again, using the following commands.
 ```sh
 sudo apt-mark unhold kubeadm
-sudo apt update && sudo apt install -y kubeadm=1.28.0-00
+sudo apt update && sudo apt install -y kubeadm=1.28.2-00
 sudo apt-mark hold kubeadm
 ```
 
@@ -161,7 +167,7 @@ kubectl drain <node-to-drain> --ignore-daemonsets
 Upgrade `kubelet` and `kubectl`:
 ```sh
 sudo apt-mark unhold kubelet kubectl
-sudo apt update && sudo apt install -y kubelet=1.28.0-00 kubectl=1.28.0-00
+sudo apt update && sudo apt install -y kubelet=1.28.2-00 kubectl=1.28.2-00
 sudo apt-mark hold kubelet kubectl
 ```
 
@@ -187,6 +193,15 @@ After `kubelet` is upgraded, verify that the node is available again by running 
 kubectl get nodes
 ```
 
+Output after the upgrade:
+```
+NAME                     STATUS   ROLES           AGE   VERSION
+k8smaster1.isociel.com   Ready    control-plane   26d   v1.28.2
+k8sworker1.isociel.com   Ready    worker          26d   v1.28.2
+k8sworker2.isociel.com   Ready    worker          26d   v1.28.2
+k8sworker3.isociel.com   Ready    worker          26d   v1.28.2
+```
+
 > **Note**
 >The STATUS column should show Ready for all your nodes, and the version number should be updated.
 
@@ -197,20 +212,20 @@ Congradulation, your cluster should run the latest version of Kubernetes 🎉�
 
 ---
 
-# Upgrade jump station
-If you manage your cluster from a `jump station`, don't forget to update `kubectl` on it.
+# Upgrade your bastion host(s)
+If you manage your cluster from a `bastion host`, don't forget to update `kubectl` on it.
 
 Upgrade `kubectl`:
 ```sh
 sudo apt-mark unhold kubectl
-sudo apt update && sudo apt install -y kubectl=1.28.0-00
+sudo apt update && sudo apt install -y kubectl=1.28.2-00
 sudo apt-mark hold kubectl
 ```
 
 After `kubelet` is upgraded, verify the version and that you have access to the cluster:
 ```sh
 kubectl version -o yaml
-kubectl get nodes
+kubectl get nodes -o wide
 ```
 
 ---

@@ -87,11 +87,11 @@ After enabling eBPF, you should have this:
 ```
 
 ## Disable kube-proxy
-Calico’s eBPF native service handling replaces `kube-proxy`. You can free up resources from your cluster by disabling and no longer running kube-proxy. When Calico is switched into eBPF mode it will try to clean up kube-proxy's iptables rules if they are present. 
+Calico's eBPF native service handling replaces `kube-proxy`. You can free up resources from your cluster by disabling and no longer running kube-proxy. When Calico is switched into eBPF mode it will try to clean up kube-proxy's iptables rules if they are present. 
 
 `kube-proxy` normally runs as a daemonset. So an easy way to stop and remove `kube-proxy` from every node is to add a nodeSelector to that daemonset which excludes all nodes.
 
-Let’s do that now in this cluster by running this command on `k8smaster1`:
+Let's do that now in this cluster by running this command on `k8smaster1`:
 ```sh
 kubectl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
 ```

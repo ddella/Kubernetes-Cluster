@@ -932,7 +932,7 @@ metadata:
   resourceVersion: "653148"
 ```
 # Create Host Endpoints
-Let’s now create the Host Endpoints, allowing Calico to start policy enforcement on **node** interfaces. If Calico can't create the `Host Endpoints`, the Global Network Policy won't be enforced.
+Let's now create the Host Endpoints, allowing Calico to start policy enforcement on **node** interfaces. If Calico can't create the `Host Endpoints`, the Global Network Policy won't be enforced.
 
 First, verify there no existing Host Endpoints:
 ```sh
@@ -944,7 +944,7 @@ Example output:
 NAME   NODE
 ```
 
-Now let’s configure Calico to automatically create Host Endpoints for Kubernetes nodes:
+Now let's configure Calico to automatically create Host Endpoints for Kubernetes nodes:
 ```sh
 daniel@k8smaster1 ~ $ calicoctl patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
 Successfully patched 1 'KubeControllersConfiguration' resource

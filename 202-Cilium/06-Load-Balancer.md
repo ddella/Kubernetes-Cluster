@@ -38,7 +38,7 @@ spec:
   selector:
     matchLabels:
       run: my-nginx
-  replicas: 3
+  replicas: 6
   template:
     metadata:
       labels:
@@ -119,7 +119,7 @@ EOF
 
 ### Create the Pool
 ```sh
- kubectl create -f ippool.yaml 
+kubectl create -f ippool.yaml
 ```
 
 ```

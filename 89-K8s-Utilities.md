@@ -124,6 +124,9 @@ unset VER
 # Install `nerdctl`
 ContaiNERD CTL is a command-line tool for managing containers for the `containerd` Container Runtime. It's compatible with Docker CLI for Docker and has the same UI/UX as the "docker" command. 
 
+> [!IMPORTANT]  
+> Install `nerdctl` on every master and worker nodes in your Kubernetes Cluster. It makes no sense to install it on your bastion host. It will query `containerd`.
+
 Get the latest version and download `nerdctl` binary file. Extract it to `/usr/local/bin`:
 
 Get the latest version of `nerdctl`:

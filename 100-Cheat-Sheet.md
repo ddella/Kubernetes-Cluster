@@ -53,7 +53,70 @@ kubectl get pods --all-namespaces -o jsonpath="{.items[*].spec.containers[*].ima
 
 # Get the cluster name
 kubectl cluster-info dump | grep "\-\-cluster-name" | tr -d '[:blank:] , "'
+
+# Get Cluster Role
+kubectl get clusterroles
+
+# Get Cluster CIDR
+kubectl describe configmap kube-proxy -n kube-system | grep clusterCIDR
+
+# Get Cluster & Service CIDR (IP subnet)
+kubectl cluster-info dump | grep -m 1 cluster-cidr | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+kubectl cluster-info dump | grep -m 1 service-cluster-ip-range | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+
+kubectl get configmap kubeadm-config -n kube-system -o yaml | grep podSubnet | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+kubectl get configmap kubeadm-config -n kube-system -o yaml | grep serviceSubnet | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+
+printf "Cluster CIDR: %s\n" $(kubectl cluster-info dump | grep -m 1 -Po '(?<=--cluster-cidr=)[0-9.\/]+')
+printf "Service CIDR: %s\n" $(kubectl cluster-info dump | grep -m 1 -Po '(?<=--service-cluster-ip-range=)[0-9.\/]+')
+
+# Configuration used to bootstrap Kubernetes
+kubectl get configmap kubeadm-config  -n kube-system -o yaml
+
+# List PodCIDR (List PodCIDR per nodes)
+kubectl describe node | egrep 'PodCIDR|Name:'
+
+# Get the full list of allocated nodePorts
+kubectl get svc --all-namespaces --sort-by=.spec.ports[0].nodePort -o go-template="{{range .items}}{{range.spec.ports}}{{if .nodePort}}{{.nodePort}}{{printf \"\n\"}}{{end}}{{end}}{{end}}"
+
+# Patch configuration instead of using "kubectl edit ..."
+# WILL ALLOCATE "targetPort"
+  # kubectl patch services -n linkerd-viz web --type merge -p '{"spec":{"type": "LoadBalancer"}}'
+  # kubectl patch services -n linkerd-viz web --type merge -p '{"spec":{"allocateLoadBalancerNodePorts": false}}'
+
+# WON'T ALLOCATE "targetPort"
+kubectl patch services -n linkerd-viz web --type=json -p '[{"op":"replace","path":"/spec/type","value":"LoadBalancer"},{"op":"add","path":"/spec/allocateLoadBalancerNodePorts","value":false}]'
+
+# Change port
+kubectl patch services -n boutique web --type merge -p '{"spec":{"ports": [{"port": 80,"name":"http"}]}}'
+
+# Get services EXTERNAL-IP
+kubectl get svc -n linkerd-viz web -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
+
+# Get services Cluster IP
+kubectl get svc -n linkerd-viz web -o jsonpath='{.spec.clusterIP}{"\n"}'
+
+# Get all services of type loadBalancer and gives it's EXTERNAL IP
+kubectl get services --all-namespaces -o json | jq  '.items[] | { name: .metadata.name, ns: .metadata.namespace, ip: .status.loadBalancer?|.ingress[]?|.ip, port: .spec.ports[]?.port, protocol: .spec.ports[]?.protocol }'
+
+# Get a list of all API servers
+kubectl -n kube-system get pod -l tier=control-plane -o wide | grep api
+
+# Get Kubernetes end point
+kubectl get ep kubernetes -o yaml
+
+# Get the `ClusterIP` of the special service that provides a way for internal applications to talk to the API server:
+dig +short kubernetes.default.svc.cluster.lan
+
+# Get node name where kube-dns runs
+kubectl get pod -n kube-system -l k8s-app=kube-dns --output=custom-columns='NODE:.spec.nodeName' --no-headers
+
+# List all Pods with some metadata
+kubectl get pods -A -o jsonpath='{range .items[*]}{"pod: "}{.metadata.name}{"\n"}{range .spec.containers[*]}{"\tname: "}{.name}{"\n\timage: "}{.image}{"\n"}{end}'
+
+
 ```
+
 
 # Cilium Cheat Sheet
 ```sh
@@ -105,7 +168,7 @@ helm show values cilium/cilium > heml.yaml
 # Ger Cilium Nodes
 kubectl get ciliumnodes.cilium.io
 
-# Troubleshoot
+# Troubleshoot: Get status of all the Pods
 curl -sLO https://raw.githubusercontent.com/cilium/cilium/main/contrib/k8s/k8s-cilium-exec.sh
 chmod +x ./k8s-cilium-exec.sh
 ./k8s-cilium-exec.sh cilium status
@@ -118,6 +181,9 @@ k edit deploy nginx-test -n nginx-ns
 
 # Find the logs of nginx-test containers
 kubectl -n nginx-ns logs deploy/nginx-test -c nginx-test
+
+# Get the names of all nodes
+kubectl get nodes -o name
 ```
 
 # References - Kubernetes

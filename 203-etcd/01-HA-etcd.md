@@ -4,7 +4,7 @@
 This guide will cover the instructions for bootstrapping an `etcd` cluster on a three-node cluster from pre-built binaries. This tutorial has nothing to do with Kubernetes but it could eventually be used when installing an H.A Kubernetes Cluster with `External etcd` topology.
 
 # Before you begin
-We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.4.14-generic.
+We will be using three Ubuntu Server 22.04.3 with Linux Kernel 6.6.1-zabbly+.
 
 Prerequisites:
 - The three nodes that can communicate with each other on TCP port `2380`.
@@ -20,9 +20,12 @@ In this tutorial we will configure a three-node TLS enabled `etcd` cluster that 
 
 |Role|FQDN|IP|OS|Kernel|RAM|vCPU|
 |----|----|----|----|----|----|----|
-|etcd|k8setcd1.isociel.com|192.168.13.35|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd|k8setcd2.isociel.com|192.168.13.36|Ubuntu 22.04.3|6.4.14|2G|2|
-|etcd|k8setcd3.isociel.com|192.168.13.37|Ubuntu 22.04.3|6.4.14|2G|2|
+|etcd database|k8s1etcd1.kloud.lan|10.103.1.101|Ubuntu 22.04.3|6.6.1|2G|2|
+|etcd database|k8s1etcd2.kloud.lan|10.103.1.102|Ubuntu 22.04.3|6.6.1|2G|2|
+|etcd database|k8s1etcd3.kloud.lan|10.103.1.103|Ubuntu 22.04.3|6.6.1|2G|2|
+|etcd database|k8s1etcd4.kloud.lan|10.103.1.201|Ubuntu 22.04.3|6.6.1|2G|2|
+|etcd database|k8s1etcd5.kloud.lan|10.103.1.202|Ubuntu 22.04.3|6.6.1|2G|2|
+|etcd database|k8s1etcd6.kloud.lan|10.103.1.203|Ubuntu 22.04.3|6.6.1|2G|2|
 
 ![ETCD Cluster](images/k8s-cluster.jpg)
 
@@ -34,7 +37,7 @@ Install the latest version of the binaries on each of the three Linux host.
 
 ## Install ETCD from binaries
 ```sh
-export VER=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest|grep tag_name | cut -d '"' -f 4)
+VER=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest|grep tag_name | cut -d '"' -f 4)
 echo ${VER}
 curl -LO https://github.com/etcd-io/etcd/releases/download/${VER}/etcd-${VER}-linux-amd64.tar.gz
 tar xvf etcd-${VER}-linux-amd64.tar.gz
@@ -59,7 +62,7 @@ unset VER
 ```
 
 # Generating and Distributing TLS Certificates
-We will use the `openssl` tool to generate our own CA and all the `etcd` server certificates and keys. You can use your won certificate manager.
+We will use the `openssl` tool to generate our own CA and all the `etcd` server certificates and keys. You can use your own certificate manager.
 
 ## Generate Private CA
 This script will generate a CA certificate with its private key. The argument is the prefix of both files created:
@@ -72,33 +75,44 @@ This results in two files
 - `etcd-ca.key` is the CA private key
 
 ## Generate Node Certificates
-You could use the same client certificate of every `etcd` node and it will work fine. I've decided to use different certificate for each node. This will generate the certificate and key for every `etcd` node in the cluster. Delete the `csr` files as they are not needed anymore:
+You could use the same client certificate of every `etcd` node and it will work fine. I've decided to use different certificate for each node. This following will generate the certificate and key for every `etcd` node in the cluster. Delete the `csr` files as they are not needed anymore:
 ```sh
-./12-gen_cert.sh k8setcd1 192.168.13.35 etcd-ca
-./12-gen_cert.sh k8setcd2 192.168.13.36 etcd-ca
-./12-gen_cert.sh k8setcd3 192.168.13.37 etcd-ca
-./12-gen_cert.sh k8smaster1 192.168.13.61 etcd-ca ',DNS:k8smaster2,DNS:k8smaster3,DNS:k8smaster1.isociel.com,DNS:k8smaster2.isociel.com,DNS:k8smaster3.isociel.com,IP:192.168.13.62,IP:192.168.13.63'rm -f *.csr
+./12-gen_cert.sh k8s1etcd1 10.103.1.101 etcd-ca
+./12-gen_cert.sh k8s1etcd2 10.103.1.102 etcd-ca
+./12-gen_cert.sh k8s1etcd3 10.103.1.103 etcd-ca
+./12-gen_cert.sh k8s1etcd4 10.103.1.201 etcd-ca
+./12-gen_cert.sh k8s1etcd5 10.103.1.202 etcd-ca
+./12-gen_cert.sh k8s1etcd6 10.103.1.203 etcd-ca
+
+./12-gen_cert.sh k8s1master1 10.101.1.101 etcd-ca ',DNS:k8s1master2,DNS:k8s1master3,DNS:k8s1master4,DNS:k8s1master5,DNS:k8s1master6,DNS:k8s1master1.kloud.lan,DNS:k8s1master2.kloud.lan,DNS:k8s1master3.kloud.lan,DNS:k8s1master4.kloud.lan,DNS:k8s1master5.kloud.lan,DNS:k8s1master6.kloud.lan,IP:10.101.1.101,IP:10.101.1.102,IP:10.101.1.103,IP:10.101.1.201,IP:10.101.1.202,IP:10.101.1.203'
+rm -f *.csr
 ```
 
 The last command is for our Kubernetes Control Plane nodes:
 
 This results in two files per `etcd` node. The `.crt` is the certificate and the `.key` is the private key:
-- k8setcd1.crt
-- k8setcd1.key
-- k8setcd2.crt
-- k8setcd2.key
-- k8setcd3.crt
-- k8setcd3.key
+- k8s1etcd1.crt
+- k8s1etcd1.key
+- k8s1etcd2.crt
+- k8s1etcd2.key
+- k8s1etcd3.crt
+- k8s1etcd3.key
+- k8s1etcd4.crt
+- k8s1etcd4.key
+- k8s1etcd5.crt
+- k8s1etcd5.key
+- k8s1etcd6.crt
+- k8s1etcd6.key
 - k8smaster1.crt
 - k8smaster1.key
 
 > [!IMPORTANT]  
 > The private keys are not encrypted as `etcd` needs a non-encrypted `pem` file.
 
-At this point, we have the certificates and keys generated for the CA and all the three nodes. The nodes certifcate has a SAN with the hostname, FQDN and IP address. See example below for node `k8setcd1`
-- DNS:k8setcd1
-- DNS:k8setcd1.isociel.com
-- IP Address:192.168.13.35
+At this point, we have the certificates and keys generated for the CA and all the six nodes. The nodes certifcate has a SAN with the hostname, FQDN and IP address. See example below for node `k8s1etcd1`
+- DNS:k8s1etcd1
+- DNS:k8s1etcd1.kloud.lan
+- IP Address:10.103.1.101
 
 # Distribute Certificates
 We need to to distribute these certificates and keys to each `etcd` node in the cluster. I've made a script. Adusts the nodes and execute.
@@ -110,6 +124,7 @@ We need to to distribute these certificates and keys to each `etcd` node in the 
 SSH into each `etcd` node and run the below commands to move the certificate and key into the `/etc/etcd/pki` directory. I will be using `tmux` to run the commands on every node at the same time. Just paste the following in each node. The certificates and keys have the prefix of the short hostname. The variable `ETCD_NAME` will be different on each node.
 ```sh
 ETCD_NAME=$(hostname -s)
+echo ${ETCD_NAME}
 sudo mkdir -p /etc/etcd/pki
 sudo mv etcd-ca.crt /etc/etcd/pki/.
 sudo mv ${ETCD_NAME}.{crt,key} /etc/etcd/pki/.
@@ -122,11 +137,14 @@ We have generated and copied all the certificates/keys on each node. In the next
 This is the configuration file `/etc/etcd/etcd.conf` that needs to be copied on each node. The command can be pasted simultaneously on all the nodes. I will be using `tmux` again:
 ```sh
 ETCD_CLUSTER_NAME=etcd-cluster-1
-ETCD_IP=$(hostname -i)
+ETCD_IP=$(hostname -I | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 ETCD_NAME=$(hostname -s)
-ETCD1_IP=192.168.13.35
-ETCD2_IP=192.168.13.36
-ETCD3_IP=192.168.13.37
+ETCD1_IP=10.103.1.101
+ETCD2_IP=10.103.1.102
+ETCD3_IP=10.103.1.103
+ETCD4_IP=10.103.1.201
+ETCD5_IP=10.103.1.202
+ETCD6_IP=10.103.1.203
 
 cat <<EOF | sudo tee /etc/etcd/etcd.conf > /dev/null
 # Human-readable name for this member.
@@ -139,13 +157,13 @@ listen-peer-urls: "https://${ETCD_IP}:2380"
 listen-client-urls: "https://${ETCD_IP}:2379,https://127.0.0.1:2379"
 
 # List of additional URLs to listen on, will respond to /metrics and /health endpoints
-listen-metrics-urls: "http://${ETCD_IP}:2381"
+listen-metrics-urls: "http://${ETCD_IP}:2381,http://127.0.0.1:2381"
 
 # Initial cluster token for the etcd cluster during bootstrap.
 initial-cluster-token: o3ZBeUqBgjAMArh8c5BQmuK
 
 # Comma separated string of initial cluster configuration for bootstrapping.
-initial-cluster: "k8setcd1=https://${ETCD1_IP}:2380,k8setcd2=https://${ETCD2_IP}:2380,k8setcd3=https://${ETCD3_IP}:2380"
+initial-cluster: "k8s1etcd1=https://${ETCD1_IP}:2380,k8s1etcd2=https://${ETCD2_IP}:2380,k8s1etcd3=https://${ETCD3_IP}:2380,k8s1etcd4=https://${ETCD4_IP}:2380,k8s1etcd5=https://${ETCD5_IP}:2380,k8s1etcd6=https://${ETCD6_IP}:2380"
 
 # List of this member's peer URLs to advertise to the rest of the cluster.
 # The URLs needed to be a comma-separated list.
@@ -231,10 +249,11 @@ To interact with the cluster we will be using `etcdctl`. It's the utility to int
 
 You can export these environment variables and connect to the clutser without specifying the values each time:
 ```sh
-export ETCDCTL_ENDPOINTS=https://k8setcd1:2379,https://k8setcd2.isociel.com:2379,https://192.168.13.37:2379
-export ETCDCTL_CACERT=./etcd-ca.crt
-export ETCDCTL_CERT=./k8setcd1.crt
-export ETCDCTL_KEY=./k8setcd1.key
+ETCD_NAME=$(hostname -s)
+export ETCDCTL_ENDPOINTS=https://k8s1etcd1.kloud.lan:2379,https://k8s1etcd2.kloud.lan:2379,https://k8s1etcd3.kloud.lan:2379,https://k8s1etcd4.kloud.lan:2379,https://k8s1etcd5.kloud.lan:2379,https://k8s1etcd6.kloud.lan:2379
+export ETCDCTL_CACERT=/etc/etcd/pki/etcd-ca.crt
+export ETCDCTL_CERT=/etc/etcd/pki/${ETCD_NAME}.crt
+export ETCDCTL_KEY=/etc/etcd/pki/${ETCD_NAME}.key
 ```
 
 > [!NOTE]  
@@ -257,35 +276,44 @@ etcdctl --write-out=table endpoint health
 See below for the ouput of the three commands above:
 ```
 etcdctl --write-out=table member list
-+------------------+---------+----------+----------------------------+---------------------------------------------------+------------+
-|        ID        | STATUS  |   NAME   |         PEER ADDRS         |                   CLIENT ADDRS                    | IS LEARNER |
-+------------------+---------+----------+----------------------------+---------------------------------------------------+------------+
-|  16ad12f4a1f549a | started | k8setcd1 | https://192.168.13.35:2380 | https://127.0.0.1:2379,https://192.168.13.35:2379 |      false |
-| 50740e0c08a5f503 | started | k8setcd3 | https://192.168.13.37:2380 | https://127.0.0.1:2379,https://192.168.13.37:2379 |      false |
-| 8c5e7dd3a9c00dca | started | k8setcd2 | https://192.168.13.36:2380 | https://127.0.0.1:2379,https://192.168.13.36:2379 |      false |
-+------------------+---------+----------+----------------------------+---------------------------------------------------+------------+
++----------------------------------+--------+-------------+-------+
+|             ENDPOINT             | HEALTH |    TOOK     | ERROR |
++----------------------------------+--------+-------------+-------+
+| https://k8s1etcd6.kloud.lan:2379 |   true | 44.772878ms |       |
+| https://k8s1etcd2.kloud.lan:2379 |   true | 44.961187ms |       |
+| https://k8s1etcd3.kloud.lan:2379 |   true | 45.047559ms |       |
+| https://k8s1etcd1.kloud.lan:2379 |   true | 45.184589ms |       |
+| https://k8s1etcd4.kloud.lan:2379 |   true | 55.984617ms |       |
+| https://k8s1etcd5.kloud.lan:2379 |   true | 56.282559ms |       |
++----------------------------------+--------+-------------+-------+
 ```
 
 ```
 etcdctl --write-out=table endpoint status
-+-----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
-|             ENDPOINT              |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS |
-+-----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
-|             https://k8setcd1:2379 |  16ad12f4a1f549a |   3.5.9 |   20 kB |     false |      false |         9 |         66 |                 66 |        |
-| https://k8setcd2.isociel.com:2379 | 8c5e7dd3a9c00dca |   3.5.9 |   20 kB |      true |      false |         9 |         66 |                 66 |        |
-|        https://192.168.13.37:2379 | 50740e0c08a5f503 |   3.5.9 |   20 kB |     false |      false |         9 |         66 |                 66 |        |
-+-----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
++----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+|             ENDPOINT             |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS |
++----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
+| https://k8s1etcd1.kloud.lan:2379 | 7719dc9215aa4c11 |  3.5.10 |   20 kB |     false |      false |         6 |         67 |                 67 |        |
+| https://k8s1etcd2.kloud.lan:2379 | 2ea42db69810c8fe |  3.5.10 |   20 kB |     false |      false |         6 |         67 |                 67 |        |
+| https://k8s1etcd3.kloud.lan:2379 | 465942f9fe912696 |  3.5.10 |   25 kB |     false |      false |         6 |         67 |                 67 |        |
+| https://k8s1etcd4.kloud.lan:2379 | 7b7051746f0994f4 |  3.5.10 |   20 kB |     false |      false |         6 |         67 |                 67 |        |
+| https://k8s1etcd5.kloud.lan:2379 | 7e1b8e4dc5233603 |  3.5.10 |   20 kB |     false |      false |         6 |         67 |                 67 |        |
+| https://k8s1etcd6.kloud.lan:2379 | cebb28b5bccb39f9 |  3.5.10 |   20 kB |      true |      false |         6 |         67 |                 67 |        |
++----------------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+--------+
 ```
 
 ```
 etcdctl --write-out=table endpoint health
-+-----------------------------------+--------+--------------+-------+
-|             ENDPOINT              | HEALTH |     TOOK     | ERROR |
-+-----------------------------------+--------+--------------+-------+
-|        https://192.168.13.37:2379 |   true |  34.222735ms |       |
-| https://k8setcd2.isociel.com:2379 |   true |  52.158893ms |       |
-|             https://k8setcd1:2379 |   true | 121.486991ms |       |
-+-----------------------------------+--------+--------------+-------+
++------------------+---------+-----------+---------------------------+--------------------------------------------------+------------+
+|        ID        | STATUS  |   NAME    |        PEER ADDRS         |                   CLIENT ADDRS                   | IS LEARNER |
++------------------+---------+-----------+---------------------------+--------------------------------------------------+------------+
+| 2ea42db69810c8fe | started | k8s1etcd2 | https://10.103.1.102:2380 | https://10.103.1.102:2379,https://127.0.0.1:2379 |      false |
+| 465942f9fe912696 | started | k8s1etcd3 | https://10.103.1.103:2380 | https://10.103.1.103:2379,https://127.0.0.1:2379 |      false |
+| 7719dc9215aa4c11 | started | k8s1etcd1 | https://10.103.1.101:2380 | https://10.103.1.101:2379,https://127.0.0.1:2379 |      false |
+| 7b7051746f0994f4 | started | k8s1etcd4 | https://10.103.1.201:2380 | https://10.103.1.201:2379,https://127.0.0.1:2379 |      false |
+| 7e1b8e4dc5233603 | started | k8s1etcd5 | https://10.103.1.202:2380 | https://10.103.1.202:2379,https://127.0.0.1:2379 |      false |
+| cebb28b5bccb39f9 | started | k8s1etcd6 | https://10.103.1.203:2380 | https://10.103.1.203:2379,https://127.0.0.1:2379 |      false |
++------------------+---------+-----------+---------------------------+--------------------------------------------------+------------+
 ```
 
 >For the `--endpoints`, enter all of your nodes. I used the short hostname, FQDN and IP address.
@@ -327,24 +355,38 @@ Hello World!
 ## Test with `cURL`
 Not very usefull. Use `etcdctl` and `etcdutl`.
 ```sh
-ENDPOINT1='https://192.168.13.36:2379'
-curl -v --cacert ./etcd-ca.crt --cert ./k8setcd1.crt --key ./k8setcd1.key \
+ENDPOINT1='https://10.103.1.102:2379'
+curl -v --cacert ./etcd-ca.crt --cert ./k8s1etcd1.crt --key ./k8s1etcd1.key \
 -L ${ENDPOINT1}/v3/kv/range -X POST -d '{"key":"L3B1Yi9hYWFh"}'
 ```
 
 ## Test Metrics
 ```sh
-METRIC='http://192.168.13.36:2381'
+METRIC='http://10.103.1.102:2381'
 curl -L ${METRIC}/metrics
 ```
 
 Check the `/health` endpoint for all your nodes:
 ```sh
-ETCD_NODES=( k8setcd1 k8setcd2 k8setcd3 ); for NODE in "${ETCD_NODES[@]}"; do curl -L http://${NODE}:2381/health; echo ""; done
+ETCD_NODES=( k8s1etcd1 k8s1etcd2 k8s1etcd3 k8s1etcd4 k8s1etcd5 k8s1etcd6 ); for NODE in "${ETCD_NODES[@]}"; do curl -L http://${NODE}:2381/health; echo ""; done
 ```
 
-Output:
+> [!IMPORTANT]  
+> If you get a `Connection refused` on the node where the script is run, it used IP address `127.0.1.1` instead of `127.0.0.1`.
+> Use the FQDN to test it.
+
 ```
+127.0.0.1 localhost k8s1etcd1
+127.0.1.1 k8s1etcd1
+...
+```
+
+Output from `k8s1etcd1`. The first line failed because it tried address `127.0.1.1`. This is normal 😉:
+```
+curl: (7) Failed to connect to k8s1etcd1 port 2381 after 0 ms: Connection refused
+
+{"health":"true","reason":""}
+{"health":"true","reason":""}
 {"health":"true","reason":""}
 {"health":"true","reason":""}
 {"health":"true","reason":""}
